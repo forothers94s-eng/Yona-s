@@ -176,17 +176,17 @@
 
         <div class="card">
             <div class="card-title">基礎底價</div>
-            <input type="number" id="basePrice" placeholder="請輸入金額" value="1000" onchange="calcTotal()" onclick="autoFocus(this)">
+            <input type="number" id="basePrice" placeholder="請輸入金額" value="600" onchange="calcTotal()" onclick="autoFocus(this)">
         </div>
 
         <div class="card">
             <div class="card-title">進階造型</div>
             <div class="toolbar-wrapper">
+                <button class="capsule-btn" onclick="addDesign('跳色', 100)">🎨 跳色</button>
                 <button class="capsule-btn" onclick="addDesign('手繪造型', 100)">🎨 手繪</button>
                 <button class="capsule-btn" onclick="addDesign('法式', 150)">🤍 法式</button>
-                <button class="capsule-btn" onclick="addDesign('滿鑽/大鑽', 200)">💎 滿鑽</button>
                 <button class="capsule-btn" onclick="addDesign('暈染', 100)">🌫️ 暈染</button>
-                <button class="capsule-btn" onclick="addDesign('漸層', 80)">🌈 漸層</button>
+                <button class="capsule-btn" onclick="addDesign('立體', 50)">🌈 立體</button>
                 <button class="capsule-btn" onclick="addDesign('貓眼', 100)">🐱 貓眼</button>
             </div>
             <div id="designList">
@@ -197,8 +197,9 @@
             <div class="card-title">卸甲服務</div>
             <div class="segmented-control">
                 <div class="segment active" onclick="setRemoval(this, 0)">無</div>
-                <div class="segment" onclick="setRemoval(this, 200)">本店 (200)</div>
+                <div class="segment" onclick="setRemoval(this, 150)">本店 (1501</div>
                 <div class="segment" onclick="setRemoval(this, 300)">他店 (300)</div>
+                <div class="segment" onclick="setRemoval(this, 500)">純卸甲 (500)</div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                 <span style="font-size: 0.9rem;">立體飾品卸除 (+$50/指)</span>
@@ -380,3 +381,4 @@
     </script>
 </body>
 </html>
+
