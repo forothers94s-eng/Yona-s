@@ -353,8 +353,8 @@ z-index: 300;
 
 <div class="container">
 <header style="margin-bottom: 24px; text-align: center;">
-<h1 style="color: var(--primary); font-family: serif; letter-spacing: 1px;">Yona's Nail Studio</h1>
-<p style="color: var(--text-sub); font-size: 12px;">費用計算機</p>
+<h1 style="color: var(--primary); font-family: serif; letter-spacing: 1px;">Nail Studio</h1>
+<p style="color: var(--text-sub); font-size: 12px;">預算計算機</p>
 </header>
 
 <section class="card">
@@ -368,12 +368,17 @@ z-index: 300;
 <section class="card">
 <h2>加購項目</h2>
 <div class="checkbox-item">
-<label for="thickening">卸指甲油 (+$50)</label>
-<input type="checkbox" id="thickening" value="300" data-name="卸指甲油">
+<label for="thickening">建構加厚 (+$300)</label>
+<input type="checkbox" id="thickening" value="300" data-name="建構加厚">
 </div>
 <div class="checkbox-item">
-<label for="matte">純基礎保養 (+$500)</label>
-<input type="checkbox" id="matte" value="100" data-name="純基礎保養">
+<label for="matte">霧面封層 (+$100)</label>
+<input type="checkbox" id="matte" value="100" data-name="霧面封層">
+</div>
+<div class="checkbox-item">
+<label for="overlay">補強 (+$100/指)</label>
+<input type="checkbox" id="overlay" value="100" data-name="單指補強"> 
+</div>
 </section>
 
 <section class="card">
@@ -456,25 +461,23 @@ z-index: 300;
 <script>
 /* --- Configuration --- */
 const artTags = [
-{ name: '手繪一指', price: 50 },
-{ name: '法式', price: 150 },
+{ name: '手繪', price: 150 },
+{ name: '法式', price: 200 },
+{ name: '漸層', price: 150 },
 { name: '暈染', price: 150 },
 { name: '鏡面', price: 100 },
 { name: '貓眼', price: 100 },
+{ name: '滿鑽', price: 300 },
 { name: '貼紙', price: 50 },
 { name: '小鑽', price: 50 }
 ];
 
 const waxTags = [
-{ name: '腋下', price: 450 },
-{ name: '全手', price: 1100 },
-{ name: '全腿', price: 1500 },
-{ name: '私密處', price: 1350 },
-{ name: '鼻毛', price:300  },
-{ name: '腋下+小腿', price:1200  },
-{ name: '私密處+腋下', price:1700  },
-{ name: '私密處+前手臂', price:1900  },
-{ name: '私密處+小腿', price:2100  },
+{ name: '腋下', price: 500 },
+{ name: '全手', price: 800 },
+{ name: '全腿', price: 1200 },
+{ name: '私密處', price: 2000 },
+{ name: '手指', price: 200 }
 ];
 
 /* --- Initialization --- */
