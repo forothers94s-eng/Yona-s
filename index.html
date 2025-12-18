@@ -1,385 +1,716 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nail Art Budget Calculator | 美甲造型試算</title>
-    <style>
-        :root {
-            --bg-color: #FDFBF7;
-            --primary-cream: #F5E6D3;
-            --accent-rose: #E8B4B8;
-            --text-main: #5D534A;
-            --text-light: #A89F94;
-            --white: #FFFFFF;
-            --shadow: 0 4px 15px rgba(0,0,0,0.05);
-            --radius: 18px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nail Art Budget | 美甲預算</title>
+<style>
+/* --- 變數與重置 (Variables & Reset) --- */
+:root {
+--bg-color: #FDFCF8; /* 奶油白 */
+--card-bg: #FFFFFF;
+--primary: #B09B88; /* 韓系奶茶棕 */
+--primary-light: #EFEBE7;
+--text-main: #5A544F;
+--text-sub: #9C948B;
+--accent: #D4A373;
+--danger: #E08D8D;
+--shadow: 0 4px 20px rgba(149, 133, 119, 0.08);
+--radius: 16px;
+--spacing: 16px;
+}
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding-bottom: 120px; /* 為底部懸浮欄留空間 */
-            line-height: 1.6;
-        }
+* {
+box-sizing: border-box;
+-webkit-tap-highlight-color: transparent;
+}
 
-        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        h1 { text-align: center; font-weight: 400; font-size: 1.5rem; margin-bottom: 25px; color: var(--text-main); }
+body {
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+background-color: var(--bg-color);
+color: var(--text-main);
+margin: 0;
+padding: 0;
+padding-bottom: 120px; /* 留給 Footer */
+font-size: 15px;
+line-height: 1.5;
+}
 
-        /* 卡片樣式 */
-        .card {
-            background: var(--white);
-            border-radius: var(--radius);
-            padding: 18px;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-        }
-        .card-title { font-weight: 600; font-size: 1rem; margin-bottom: 15px; display: flex; align-items: center; }
-        .card-title::before { content: ''; width: 4px; height: 16px; background: var(--accent-rose); margin-right: 8px; border-radius: 2px; }
+h1, h2, h3 { margin: 0; font-weight: 600; }
+h2 { font-size: 18px; margin-bottom: 12px; color: var(--text-main); display: flex; align-items: center; gap: 8px;}
 
-        /* 輸入框通用樣式 */
-        input[type="number"], input[type="text"] {
-            width: 100%;
-            border: 1.5px solid var(--primary-cream);
-            border-radius: 10px;
-            padding: 10px;
-            font-size: 1rem;
-            color: var(--text-main);
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        input:focus { border-color: var(--accent-rose); }
+/* --- 通用元件 (Components) --- */
+.container {
+max-width: 600px;
+margin: 0 auto;
+padding: var(--spacing);
+}
 
-        /* 快選列 (Quick Toolbar) */
-        .toolbar-wrapper {
-            margin: 0 -20px 15px -20px;
-            overflow-x: auto;
-            padding: 5px 20px;
-            display: flex;
-            gap: 10px;
-            scrollbar-width: none; /* Firefox */
-        }
-        .toolbar-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
-        
-        .capsule-btn {
-            white-space: nowrap;
-            background: var(--primary-cream);
-            border: none;
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            color: var(--text-main);
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .capsule-btn:active { transform: scale(0.95); background: var(--accent-rose); color: white; }
+.card {
+background: var(--card-bg);
+border-radius: var(--radius);
+padding: 20px;
+margin-bottom: var(--spacing);
+box-shadow: var(--shadow);
+border: 1px solid rgba(0,0,0,0.02);
+}
 
-        /* 動態列表 */
-        .dynamic-item {
-            display: grid;
-            grid-template-columns: 2fr 1.2fr 1fr 40px;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 10px;
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.input-group {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin-bottom: 12px;
+}
 
-        /* 數量加減器 */
-        .stepper {
-            display: flex;
-            align-items: center;
-            background: var(--bg-color);
-            border-radius: 8px;
-            justify-content: space-between;
-        }
-        .stepper button {
-            background: none; border: none; width: 30px; height: 35px; cursor: pointer; font-size: 1.2rem; color: var(--text-main);
-        }
-        .stepper span { font-size: 0.9rem; min-width: 20px; text-align: center; }
+input[type="text"], input[type="number"] {
+width: 100%;
+padding: 12px;
+border: 1px solid #EEE;
+border-radius: 10px;
+font-size: 16px;
+background: #FAFAFA;
+color: var(--text-main);
+transition: all 0.3s ease;
+}
 
-        .btn-delete { color: #E57373; border: none; background: none; font-size: 1.2rem; cursor: pointer; }
+input:focus {
+outline: none;
+border-color: var(--primary);
+background: #FFF;
+box-shadow: 0 0 0 3px rgba(176, 155, 136, 0.1);
+}
 
-        /* 卸甲切換按鈕 */
-        .segmented-control {
-            display: flex;
-            background: var(--bg-color);
-            border-radius: 12px;
-            padding: 4px;
-            gap: 4px;
-        }
-        .segment {
-            flex: 1;
-            text-align: center;
-            padding: 8px;
-            font-size: 0.85rem;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .segment.active { background: var(--white); box-shadow: 0 2px 8px rgba(0,0,0,0.05); color: var(--accent-rose); font-weight: bold; }
+label {
+font-size: 14px;
+color: var(--text-sub);
+}
 
-        /* 底部懸浮欄 */
-        .sticky-footer {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: var(--white);
-            padding: 15px 25px 35px 25px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-        }
-        .total-label { font-size: 0.9rem; color: var(--text-light); }
-        .total-amount { font-size: 1.6rem; font-weight: bold; color: var(--accent-rose); }
-        .footer-btns { display: flex; gap: 10px; }
-        .btn-main {
-            background: var(--text-main);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
+/* --- 開關 Toggle & Checkbox --- */
+.checkbox-item {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 10px 0;
+border-bottom: 1px dashed #EEE;
+}
+.checkbox-item:last-child { border-bottom: none; }
 
-        /* Bottom Sheet Modal */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
-            display: none; z-index: 200;
-        }
-        .bottom-sheet {
-            position: fixed; bottom: -100%; left: 0; right: 0;
-            background: var(--white);
-            border-radius: 25px 25px 0 0;
-            padding: 25px;
-            transition: bottom 0.3s ease;
-            max-height: 80vh;
-            overflow-y: auto;
-            z-index: 201;
-        }
-        .bottom-sheet.active { bottom: 0; }
-        .bill-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
-        .bill-total { border-top: 1px dashed var(--primary-cream); margin-top: 15px; padding-top: 15px; font-weight: bold; font-size: 1.1rem; text-align: right; }
-        .copy-btn { width: 100%; background: var(--accent-rose); color: white; border: none; padding: 12px; border-radius: 12px; margin-top: 20px; cursor: pointer; }
-    </style>
+input[type="checkbox"] {
+accent-color: var(--primary);
+width: 18px;
+height: 18px;
+}
+
+/* --- 頂部快選列 (Quick Toolbar) --- */
+.quick-toolbar {
+display: flex;
+gap: 8px;
+overflow-x: auto;
+padding-bottom: 10px;
+margin-bottom: 10px;
+scrollbar-width: none; /* Firefox */
+}
+.quick-toolbar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+.chip {
+flex: 0 0 auto;
+padding: 6px 14px;
+background: var(--primary-light);
+color: var(--text-main);
+border-radius: 20px;
+font-size: 13px;
+cursor: pointer;
+transition: background 0.2s;
+border: 1px solid transparent;
+}
+.chip:active {
+background: var(--primary);
+color: #FFF;
+}
+
+/* --- 動態欄位列 (Dynamic Rows) --- */
+.dynamic-row {
+display: grid;
+grid-template-columns: 1.5fr 1fr auto auto;
+gap: 8px;
+align-items: center;
+margin-bottom: 10px;
+animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(5px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.stepper {
+display: flex;
+align-items: center;
+background: #F5F5F5;
+border-radius: 8px;
+padding: 2px;
+}
+.stepper button {
+background: none;
+border: none;
+width: 28px;
+height: 28px;
+font-size: 16px;
+color: var(--primary);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.stepper span {
+width: 24px;
+text-align: center;
+font-size: 14px;
+font-weight: 600;
+}
+
+.btn-delete {
+background: none;
+border: none;
+color: #DDD;
+font-size: 20px;
+padding: 0 4px;
+cursor: pointer;
+}
+.btn-delete:hover { color: var(--danger); }
+
+/* --- 卸甲區 (Removal) --- */
+.segmented-control {
+display: flex;
+background: #F0F0F0;
+border-radius: 10px;
+padding: 4px;
+margin-bottom: 15px;
+}
+.segmented-control label {
+flex: 1;
+text-align: center;
+padding: 8px 0;
+font-size: 13px;
+color: var(--text-sub);
+cursor: pointer;
+border-radius: 8px;
+transition: all 0.3s;
+}
+.segmented-control input { display: none; }
+.segmented-control input:checked + label {
+background: #FFF;
+color: var(--primary);
+box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+font-weight: 600;
+}
+
+/* --- 底部懸浮 (Sticky Footer) --- */
+.sticky-footer {
+position: fixed;
+bottom: 0;
+left: 0;
+width: 100%;
+background: rgba(255, 255, 255, 0.95);
+backdrop-filter: blur(10px);
+padding: 16px var(--spacing);
+padding-bottom: calc(16px + env(safe-area-inset-bottom));
+box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+display: flex;
+justify-content: space-between;
+align-items: center;
+z-index: 100;
+}
+
+.total-display {
+display: flex;
+flex-direction: column;
+}
+.total-label { font-size: 12px; color: var(--text-sub); }
+.total-amount { font-size: 24px; font-weight: 700; color: var(--primary); }
+
+.footer-actions {
+display: flex;
+gap: 10px;
+}
+
+.btn {
+border: none;
+border-radius: 12px;
+padding: 10px 16px;
+font-size: 14px;
+font-weight: 600;
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 6px;
+transition: transform 0.1s;
+}
+.btn:active { transform: scale(0.96); }
+
+.btn-outline {
+background: transparent;
+border: 1px solid #DDD;
+color: var(--text-main);
+}
+.btn-primary {
+background: var(--primary);
+color: #FFF;
+}
+
+/* --- 帳單明細 Modal (Bottom Sheet) --- */
+.modal-overlay {
+position: fixed;
+top: 0; left: 0; right: 0; bottom: 0;
+background: rgba(0,0,0,0.4);
+z-index: 200;
+opacity: 0;
+visibility: hidden;
+transition: opacity 0.3s;
+display: flex;
+align-items: flex-end;
+}
+.modal-overlay.open { opacity: 1; visibility: visible; }
+
+.modal-content {
+background: #FFF;
+width: 100%;
+max-width: 600px;
+margin: 0 auto;
+border-radius: 24px 24px 0 0;
+padding: 24px;
+padding-bottom: calc(24px + env(safe-area-inset-bottom));
+transform: translateY(100%);
+transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+max-height: 80vh;
+overflow-y: auto;
+}
+.modal-overlay.open .modal-content { transform: translateY(0); }
+
+.bill-header {
+text-align: center;
+margin-bottom: 20px;
+position: relative;
+}
+.bill-header::after {
+content: "";
+display: block;
+width: 40px;
+height: 4px;
+background: #EEE;
+border-radius: 2px;
+margin: 10px auto 0;
+}
+
+.bill-row {
+display: flex;
+justify-content: space-between;
+padding: 8px 0;
+font-size: 14px;
+border-bottom: 1px dashed #F5F5F5;
+}
+.bill-row.total {
+border-top: 2px solid #EEE;
+border-bottom: none;
+margin-top: 10px;
+padding-top: 15px;
+font-weight: 700;
+font-size: 18px;
+color: var(--primary);
+}
+
+/* 標題裝飾 */
+h2::before {
+content: '';
+display: block;
+width: 4px;
+height: 18px;
+background: var(--primary);
+border-radius: 2px;
+}
+
+/* 複製提示 */
+.toast {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background: rgba(0,0,0,0.8);
+color: #FFF;
+padding: 12px 24px;
+border-radius: 30px;
+font-size: 14px;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.3s;
+z-index: 300;
+}
+.toast.show { opacity: 1; }
+
+</style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Nail Studio 試算</h1>
+<div class="container">
+<header style="margin-bottom: 24px; text-align: center;">
+<h1 style="color: var(--primary); font-family: serif; letter-spacing: 1px;">Yona's Nail Studio</h1>
+<p style="color: var(--text-sub); font-size: 12px;">費用計算機</p>
+</header>
 
-        <div class="card">
-            <div class="card-title">基礎底價</div>
-            <input type="number" id="basePrice" placeholder="請輸入金額" value="600" onchange="calcTotal()" onclick="autoFocus(this)">
-        </div>
+<section class="card">
+<h2>基礎保養/單色</h2>
+<div class="input-group">
+<label>基礎底價 (單色/跳色)</label>
+<input type="number" id="basePrice" value="1000" inputmode="numeric">
+</div>
+</section>
 
-        <div class="card">
-            <div class="card-title">進階造型</div>
-            <div class="toolbar-wrapper">
-                <button class="capsule-btn" onclick="addDesign('跳色', 100)">🎨 跳色</button>
-                <button class="capsule-btn" onclick="addDesign('手繪造型', 100)">🎨 手繪</button>
-                <button class="capsule-btn" onclick="addDesign('法式', 150)">🤍 法式</button>
-                <button class="capsule-btn" onclick="addDesign('暈染', 100)">🌫️ 暈染</button>
-                <button class="capsule-btn" onclick="addDesign('立體', 50)">🌈 立體</button>
-                <button class="capsule-btn" onclick="addDesign('貓眼', 100)">🐱 貓眼</button>
-            </div>
-            <div id="designList">
-                </div>
-        </div>
+<section class="card">
+<h2>加購項目</h2>
+<div class="checkbox-item">
+<label for="thickening">卸指甲油 (+$50)</label>
+<input type="checkbox" id="thickening" value="300" data-name="卸指甲油">
+</div>
+<div class="checkbox-item">
+<label for="matte">純基礎保養 (+$500)</label>
+<input type="checkbox" id="matte" value="100" data-name="純基礎保養">
+</section>
 
-        <div class="card">
-            <div class="card-title">卸甲服務</div>
-            <div class="segmented-control">
-                <div class="segment active" onclick="setRemoval(this, 0)">無</div>
-                <div class="segment" onclick="setRemoval(this, 150)">本店 (150)</div>
-                <div class="segment" onclick="setRemoval(this, 300)">他店 (300)</div>
-                <div class="segment" onclick="setRemoval(this, 500)">純卸甲 (500)</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                <span style="font-size: 0.9rem;">立體飾品卸除 (+$50/指)</span>
-                <div class="stepper" style="width: 100px;">
-                    <button onclick="changeStepper('removal3D', -1)">-</button>
-                    <span id="removal3D">0</span>
-                    <button onclick="changeStepper('removal3D', 1)">+</button>
-                </div>
-            </div>
-        </div>
+<section class="card">
+<h2>進階造型</h2>
+<div class="quick-toolbar" id="artToolbar">
+</div>
+<div id="artContainer"></div>
+</section>
 
-        <div class="card">
-            <div class="card-title">折扣或額外加價</div>
-            <input type="number" id="extraAdjust" placeholder="正數加價，負數折扣 (例如 -100)" onchange="calcTotal()" onclick="autoFocus(this)">
-        </div>
-    </div>
+<section class="card">
+<h2>卸甲服務</h2>
+<div class="segmented-control">
+<input type="radio" name="removal" id="rem-none" value="0" checked>
+<label for="rem-none">無</label>
 
-    <div class="sticky-footer">
-        <div>
-            <div class="total-label">預算總計</div>
-            <div class="total-amount">NT$ <span id="displayTotal">1,000</span></div>
-        </div>
-        <div class="footer-btns">
-            <button class="btn-main" onclick="toggleModal(true)">👁️ 明細</button>
-        </div>
-    </div>
+<input type="radio" name="removal" id="rem-store" value="150" data-name="本店卸甲">
+<label for="rem-store">本店 $150</label>
 
-    <div class="modal-overlay" id="overlay" onclick="toggleModal(false)"></div>
-    <div class="bottom-sheet" id="bottomSheet">
-        <div style="width: 40px; height: 5px; background: #eee; border-radius: 5px; margin: -10px auto 20px;"></div>
-        <h3 style="margin-top: 0;">電子帳單明細</h3>
-        <div id="billContent">
-            </div>
-        <button class="copy-btn" onclick="copyBill()">📋 複製帳單資訊</button>
-    </div>
+<input type="radio" name="removal" id="rem-other" value="300" data-name="他店卸甲">
+<label for="rem-other">他店 $300</label>
+</div>
 
-    <script>
-        let designs = [];
-        let removalPrice = 0;
-        let removal3DCount = 0;
+<div class="checkbox-item" style="border:none; padding-top:10px;">
+<span style="font-size:14px;">立體大鑽/飾品卸除 (+$50/指)</span>
+<div class="stepper">
+<button onclick="updateStepper('removal3d', -1)">-</button>
+<span id="removal3d-val">0</span>
+<button onclick="updateStepper('removal3d', 1)">+</button>
+</div>
+<input type="hidden" id="removal3d-qty" value="0">
+</div>
+</section>
 
-        // 1. 自動全選與捲動優化
-        function autoFocus(el) {
-            el.select();
-            setTimeout(() => {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-        }
+<section class="card">
+<h2>熱蠟除毛</h2>
+<div class="quick-toolbar" id="waxToolbar">
+</div>
+<div id="waxContainer"></div>
+</section>
 
-        // 2. 新增造型
-        function addDesign(name, price) {
-            const id = Date.now();
-            designs.push({ id, name, price, qty: 1 });
-            renderDesigns();
-            calcTotal();
-        }
+<section class="card">
+<h2>其他 / 折扣</h2>
+<div class="input-group">
+<label>調整金額 (負數為折扣)</label>
+<input type="number" id="adjustment" placeholder="-100 or 200" inputmode="numeric">
+</div>
+</section>
+</div>
 
-        function renderDesigns() {
-            const container = document.getElementById('designList');
-            container.innerHTML = '';
-            designs.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'dynamic-item';
-                div.innerHTML = `
-                    <input type="text" value="${item.name}" onchange="updateDesign(${index}, 'name', this.value)">
-                    <input type="number" value="${item.price}" onchange="updateDesign(${index}, 'price', this.value)" onclick="autoFocus(this)">
-                    <div class="stepper">
-                        <button onclick="updateQty(${index}, -1)">-</button>
-                        <span>${item.qty}</span>
-                        <button onclick="updateQty(${index}, 1)">+</button>
-                    </div>
-                    <button class="btn-delete" onclick="removeDesign(${index})">×</button>
-                `;
-                container.appendChild(div);
-            });
-        }
+<footer class="sticky-footer">
+<div class="total-display">
+<span class="total-label">預估總金額</span>
+<span class="total-amount" id="footerTotal">$0</span>
+</div>
+<div class="footer-actions">
+<button class="btn btn-outline" onclick="toggleModal(true)">
+👁️ 明細
+</button>
+<button class="btn btn-primary" onclick="copyToClipboard()">
+📋 複製
+</button>
+</div>
+</footer>
 
-        function updateDesign(index, field, value) {
-            designs[index][field] = field === 'price' ? parseInt(value) || 0 : value;
-            calcTotal();
-        }
+<div class="modal-overlay" id="billModal" onclick="if(event.target === this) toggleModal(false)">
+<div class="modal-content">
+<div class="bill-header">
+<h3>預算明細</h3>
+</div>
+<div id="billDetails">
+</div>
+<button class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center;" onclick="toggleModal(false)">
+關閉
+</button>
+</div>
+</div>
 
-        function updateQty(index, change) {
-            designs[index].qty = Math.max(1, designs[index].qty + change);
-            renderDesigns();
-            calcTotal();
-        }
+<div class="toast" id="toast">已複製明細！</div>
 
-        function removeDesign(index) {
-            designs.splice(index, 1);
-            renderDesigns();
-            calcTotal();
-        }
+<script>
+/* --- Configuration --- */
+const artTags = [
+{ name: '手繪一指', price: 50 },
+{ name: '法式', price: 150 },
+{ name: '暈染', price: 150 },
+{ name: '鏡面', price: 100 },
+{ name: '貓眼', price: 100 },
+{ name: '貼紙', price: 50 },
+{ name: '小鑽', price: 50 }
+];
 
-        // 3. 卸甲處理
-        function setRemoval(el, price) {
-            document.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
-            el.classList.add('active');
-            removalPrice = price;
-            calcTotal();
-        }
+const waxTags = [
+{ name: '腋下', price: 450 },
+{ name: '全手', price: 1100 },
+{ name: '全腿', price: 1500 },
+{ name: '私密處', price: 1350 },
+{ name: '鼻毛', price:300  },
+{ name: '腋下+小腿', price:1200  },
+{ name: '私密處+腋下', price:1700  },
+{ name: '私密處+前手臂', price:1900  },
+{ name: '私密處+小腿', price:2100  },
+];
 
-        function changeStepper(id, change) {
-            removal3DCount = Math.max(0, removal3DCount + change);
-            document.getElementById(id).innerText = removal3DCount;
-            calcTotal();
-        }
+/* --- Initialization --- */
+document.addEventListener('DOMContentLoaded', () => {
+initToolbar('artToolbar', artTags, 'artContainer');
+initToolbar('waxToolbar', waxTags, 'waxContainer');
+calculateTotal();
 
-        // 4. 計算總價
-        function calcTotal() {
-            const base = parseInt(document.getElementById('basePrice').value) || 0;
-            const extra = parseInt(document.getElementById('extraAdjust').value) || 0;
-            const designsTotal = designs.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            const removal3DTotal = removal3DCount * 50;
-            
-            const total = base + designsTotal + removalPrice + removal3DTotal + extra;
-            document.getElementById('displayTotal').innerText = total.toLocaleString();
-            return { base, designsTotal, removalPrice, removal3DTotal, extra, total };
-        }
+// Bind basic inputs
+document.getElementById('basePrice').addEventListener('input', calculateTotal);
+document.getElementById('thickening').addEventListener('change', calculateTotal);
+document.getElementById('matte').addEventListener('change', calculateTotal);
+document.getElementById('overlay').addEventListener('change', calculateTotal);
+document.querySelectorAll('input[name="removal"]').forEach(r => r.addEventListener('change', calculateTotal));
+document.getElementById('adjustment').addEventListener('input', calculateTotal);
+});
 
-        // 5. Modal 控制
-        function toggleModal(show) {
-            const overlay = document.getElementById('overlay');
-            const sheet = document.getElementById('bottomSheet');
-            if (show) {
-                updateBillDetail();
-                overlay.style.display = 'block';
-                setTimeout(() => sheet.classList.add('active'), 10);
-            } else {
-                sheet.classList.remove('active');
-                setTimeout(() => overlay.style.display = 'none', 300);
-            }
-        }
+/* --- UI Logic --- */
 
-        function updateBillDetail() {
-            const data = calcTotal();
-            let html = `
-                <div class="bill-item"><span>基礎底價</span><span>$${data.base}</span></div>
-            `;
-            
-            designs.forEach(item => {
-                html += `<div class="bill-item"><span>${item.name} (x${item.qty})</span><span>$${item.price * item.qty}</span></div>`;
-            });
+// Create Toolbar Chips
+function initToolbar(toolbarId, tags, containerId) {
+const toolbar = document.getElementById(toolbarId);
+tags.forEach(tag => {
+const chip = document.createElement('div');
+chip.className = 'chip';
+chip.textContent = tag.name;
+chip.onclick = () => addRow(containerId, tag.name, tag.price);
+toolbar.appendChild(chip);
+});
+}
 
-            if (data.removalPrice > 0) {
-                html += `<div class="bill-item"><span>卸甲服務</span><span>$${data.removalPrice}</span></div>`;
-            }
-            if (data.removal3DTotal > 0) {
-                html += `<div class="bill-item"><span>立體卸除 (${removal3DCount}指)</span><span>$${data.removal3DTotal}</span></div>`;
-            }
-            if (data.extra !== 0) {
-                html += `<div class="bill-item"><span>其他調整</span><span>$${data.extra}</span></div>`;
-            }
+// Add Dynamic Row
+function addRow(containerId, name = '', price = 0) {
+const container = document.getElementById(containerId);
+const rowId = 'row-' + Date.now();
 
-            html += `<div class="bill-total">總計：NT$ ${data.total.toLocaleString()}</div>`;
-            document.getElementById('billContent').innerHTML = html;
-        }
+const div = document.createElement('div');
+div.className = 'dynamic-row';
+div.id = rowId;
+div.innerHTML = `
+<input type="text" class="row-name" value="${name}" placeholder="項目">
+<input type="number" class="row-price" value="${price}" inputmode="numeric">
+<div class="stepper">
+<button onclick="updateRowQty('${rowId}', -1)">-</button>
+<span class="row-qty">1</span>
+<button onclick="updateRowQty('${rowId}', 1)">+</button>
+</div>
+<button class="btn-delete" onclick="removeRow('${rowId}')">&times;</button>
+`;
 
-        // 6. 複製功能
-        function copyBill() {
-            const data = calcTotal();
-            let text = `✨ Nail Art 服務明細 ✨\n`;
-            text += `--------------------------\n`;
-            text += `基礎底價: $${data.base}\n`;
-            designs.forEach(item => {
-                text += `${item.name} x${item.qty}: $${item.price * item.qty}\n`;
-            });
-            if (data.removalPrice > 0) text += `卸甲服務: $${data.removalPrice}\n`;
-            if (data.removal3DTotal > 0) text += `立體卸除 x${removal3DCount}: $${data.removal3DTotal}\n`;
-            if (data.extra !== 0) text += `其他調整: $${data.extra}\n`;
-            text += `--------------------------\n`;
-            text += `總計金額: NT$ ${data.total.toLocaleString()}\n`;
-            text += `謝謝您的預約，期待為您服務！`;
+container.appendChild(div);
 
-            navigator.clipboard.writeText(text).then(() => {
-                alert('帳單明細已複製到剪貼簿！');
-            });
-        }
-    </script>
+// Add Input Logic (Auto select & Scroll)
+const priceInput = div.querySelector('.row-price');
+priceInput.addEventListener('focus', function() {
+this.select();
+setTimeout(() => {
+this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}, 300);
+});
+priceInput.addEventListener('input', calculateTotal);
+
+const nameInput = div.querySelector('.row-name');
+nameInput.addEventListener('focus', function() {
+setTimeout(() => {
+this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}, 300);
+});
+
+calculateTotal();
+}
+
+function removeRow(rowId) {
+const row = document.getElementById(rowId);
+row.remove();
+calculateTotal();
+}
+
+function updateRowQty(rowId, change) {
+const row = document.getElementById(rowId);
+const qtySpan = row.querySelector('.row-qty');
+let qty = parseInt(qtySpan.textContent) + change;
+if (qty < 1) qty = 1;
+qtySpan.textContent = qty;
+calculateTotal();
+}
+
+function updateStepper(idPrefix, change) {
+const valSpan = document.getElementById(idPrefix + '-val');
+const hiddenInput = document.getElementById(idPrefix + '-qty');
+let val = parseInt(hiddenInput.value) + change;
+if (val < 0) val = 0;
+hiddenInput.value = val;
+valSpan.textContent = val;
+calculateTotal();
+}
+
+/* --- Calculation Core --- */
+function calculateTotal() {
+let total = 0;
+let details = [];
+
+// 1. Base
+const basePrice = parseInt(document.getElementById('basePrice').value) || 0;
+total += basePrice;
+details.push({ name: '基礎保養/單色', price: basePrice, qty: 1 });
+
+// 2. Fixed Add-ons
+const addons = ['thickening', 'matte', 'overlay'];
+addons.forEach(id => {
+const el = document.getElementById(id);
+if (el.checked) {
+const p = parseInt(el.value);
+total += p;
+details.push({ name: el.dataset.name, price: p, qty: 1 });
+}
+});
+
+// 3. Dynamic Rows (Art & Waxing)
+['artContainer', 'waxContainer'].forEach(containerId => {
+const rows = document.getElementById(containerId).querySelectorAll('.dynamic-row');
+rows.forEach(row => {
+const name = row.querySelector('.row-name').value;
+const price = parseInt(row.querySelector('.row-price').value) || 0;
+const qty = parseInt(row.querySelector('.row-qty').textContent);
+
+if (price > 0) {
+total += (price * qty);
+details.push({ name: name, price: price, qty: qty });
+}
+});
+});
+
+// 4. Removal
+const removalOption = document.querySelector('input[name="removal"]:checked');
+if (removalOption && parseInt(removalOption.value) > 0) {
+total += parseInt(removalOption.value);
+details.push({ name: removalOption.dataset.name, price: parseInt(removalOption.value), qty: 1 });
+}
+
+const removal3dQty = parseInt(document.getElementById('removal3d-qty').value);
+if (removal3dQty > 0) {
+const p = 50 * removal3dQty;
+total += p;
+details.push({ name: '立體卸除', price: 50, qty: removal3dQty });
+}
+
+// 6. Adjustment
+const adj = parseInt(document.getElementById('adjustment').value) || 0;
+if (adj !== 0) {
+total += adj;
+details.push({ name: '其他調整', price: adj, qty: 1 });
+}
+
+// Update UI
+document.getElementById('footerTotal').textContent = '$' + total.toLocaleString();
+
+// Render Details HTML
+renderBill(details, total);
+
+return { total, details };
+}
+
+function renderBill(details, total) {
+const container = document.getElementById('billDetails');
+let html = '';
+details.forEach(item => {
+const subtotal = item.price * item.qty;
+const priceStr = item.qty > 1 ? `$${item.price} x ${item.qty}` : `$${item.price}`;
+html += `
+<div class="bill-row">
+<span>${item.name} ${item.qty > 1 ? '<small>x'+item.qty+'</small>' : ''}</span>
+<span>$${subtotal}</span>
+</div>
+`;
+});
+html += `
+<div class="bill-row total">
+<span>總計 Total</span>
+<span>$${total.toLocaleString()}</span>
+</div>
+`;
+container.innerHTML = html;
+}
+
+/* --- Interactions --- */
+function toggleModal(show) {
+const modal = document.getElementById('billModal');
+if (show) modal.classList.add('open');
+else modal.classList.remove('open');
+}
+
+function copyToClipboard() {
+const { total, details } = calculateTotal();
+const date = new Date().toLocaleDateString();
+
+let text = `【美甲預算估價單】\n日期：${date}\n------------------\n`;
+
+details.forEach(item => {
+const subtotal = item.price * item.qty;
+if (item.qty > 1) {
+text += `${item.name} ($${item.price} x ${item.qty}) $${subtotal}\n`;
+} else {
+text += `${item.name} $${subtotal}\n`;
+}
+});
+
+text += `------------------\n總金額：$${total.toLocaleString()}`;
+
+if (navigator.clipboard && window.isSecureContext) {
+navigator.clipboard.writeText(text).then(showToast);
+} else {
+// Fallback for older browsers
+const textArea = document.createElement("textarea");
+textArea.value = text;
+textArea.style.position = "fixed";
+document.body.appendChild(textArea);
+textArea.focus();
+textArea.select();
+try {
+document.execCommand('copy');
+showToast();
+} catch (err) {
+console.error('Copy failed', err);
+}
+document.body.removeChild(textArea);
+}
+}
+
+function showToast() {
+const toast = document.getElementById('toast');
+toast.classList.add('show');
+setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+</script>
+
 </body>
 </html>
-
-
