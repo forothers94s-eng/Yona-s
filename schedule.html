@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yona's Schedule Maker</title>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<style>
+    :root {
+        --bg-color: #FDFCF8;
+        --card-bg: rgba(255, 255, 255, 0.85); /* 半透明白，讓底圖透出來 */
+        --primary: #B09B88; /* 奶茶棕 */
+        --text: #5A544F;
+        --accent: #D4A373;
+        --radius: 16px;
+    }
+
+    body {
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        background: #eee;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    /* --- 控制區 (只有店主看得到) --- */
+    .controls {
+        background: white;
+        padding: 20px;
+        border-radius: var(--radius);
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        text-align: center;
+    }
+
+    .btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+    }
+    .btn.secondary { background: #999; }
+    
+    input[type="month"] {
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+    }
+
+    /* --- 畫布區 (最後會變成圖片的部分) --- */
+    #capture-area {
+        width: 375px; /* 模擬手機寬度/IG限動寬度 */
+        height: 600px; /* 長方形比例 */
+        background-color: var(--bg-color);
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 30px 20px;
+    }
+
+    /* 半透明遮罩 (讓文字清楚) */
+    .overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(253, 252, 248, 0.85); /* 奶油色濾鏡 */
+        z-index: 0;
+    }
+
+    /* 內容容器 */
+    .content-box {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    h1 {
+        font-family: serif;
+        color: var(--primary);
+        font-size: 28px;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+    }
+
+    .month-title {
+        font-size: 18px;
+        color: var(--text);
+        margin-bottom: 20px;
+        font-weight: normal;
+        border-bottom: 1px dashed var(--primary);
+        padding-bottom: 5px;
+        padding-left: 20px; 
+        padding-right: 20px;
+    }
+
+    /* 日曆網格 */
+    .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        width: 100%;
+        margin-bottom: auto; /* 推到上面 */
+    }
+
+    .day-header {
+        font-size: 12px;
+        color: var(--primary);
+        text-align: center;
+        padding-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .day-cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: var(--text);
+        background: rgba(255,255,255,0.6);
+        border-radius: 50%; /* 圓形 */
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        position: relative;
+    }
+
+    /* 狀態樣式 */
+    .day-cell.full { /* 滿 */
+        background: #EBEBEB;
+        color: #BBB;
+        text-decoration: line-through;
+    }
+    
+    .day-cell.off { /* 休 */
+        background: var(--primary);
+        color: white;
+    }
+    .day-cell.off::after {
+        content: 'OFF';
+        font-size: 8px;
+        position: absolute;
+        bottom: 2px;
+    }
+
+    .day-cell.empty { /* 空白日期 (每個月前後多餘的) */
+        background: transparent;
+        cursor: default;
+    }
+
+    /* 底部說明 */
+    .legend {
+        display: flex;
+        gap: 15px;
+        font-size: 12px;
+        color: var(--text);
+        margin-top: 20px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    
+    .footer-text {
+        margin-top: 15px;
+        font-size: 10px;
+        color: var(--primary);
+        letter-spacing: 2px;
+    }
+
+</style>
+</head>
+<body>
+
+    <div class="controls">
+        <h3>📅 製作時刻表</h3>
+        <input type="month" id="monthPicker">
+        <br>
+        <label class="btn secondary">
+            📷 上傳底圖
+            <input type="file" id="bgInput" accept="image/*" style="display: none;">
+        </label>
+        <button class="btn" onclick="downloadImage()">⬇️ 下載圖片</button>
+        <p style="font-size: 12px; color: #888; margin-top: 10px;">
+            點擊日期圓圈可切換狀態：<br>
+            ⚪️白色 = 可約 | 🟤棕色 = 休假 | 🔘灰色 = 已滿
+        </p>
+    </div>
+
+    <div id="capture-area">
+        <div class="overlay"></div> <div class="content-box">
+            <h1>Yona's nail studio</h1>
+            <div class="month-title" id="displayMonth">September 2024</div>
+
+            <div class="calendar">
+                <div class="day-header">SUN</div>
+                <div class="day-header">MON</div>
+                <div class="day-header">TUE</div>
+                <div class="day-header">WED</div>
+                <div class="day-header">THU</div>
+                <div class="day-header">FRI</div>
+                <div class="day-header">SAT</div>
+                
+                <div id="calendar-grid" style="display: contents;"></div>
+            </div>
+
+            <div class="legend">
+                <span><span class="dot" style="background:white; border:1px solid #ddd;"></span>可預約</span>
+                <span><span class="dot" style="background:#EBEBEB; text-decoration:line-through;"></span>額滿</span>
+                <span><span class="dot" style="background:var(--primary);"></span>公休</span>
+            </div>
+
+            <div class="footer-text">RESERVATION ONLY</div>
+        </div>
+    </div>
+
+<script>
+    const monthPicker = document.getElementById('monthPicker');
+    const displayMonth = document.getElementById('displayMonth');
+    const calendarGrid = document.getElementById('calendar-grid');
+    const bgInput = document.getElementById('bgInput');
+    const captureArea = document.getElementById('capture-area');
+
+    // 初始化：設定為當前月份
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    monthPicker.value = `${yyyy}-${mm}`;
+    
+    // 監聽事件
+    monthPicker.addEventListener('change', renderCalendar);
+    bgInput.addEventListener('change', handleBgUpload);
+
+    // 第一次渲染
+    renderCalendar();
+
+    function renderCalendar() {
+        const [year, month] = monthPicker.value.split('-').map(Number);
+        
+        // 更新標題 (轉成英文月份)
+        const dateObj = new Date(year, month - 1);
+        const options = { year: 'numeric', month: 'long' }; // e.g. September 2024
+        displayMonth.textContent = dateObj.toLocaleDateString('en-US', options);
+
+        // 清空格子
+        calendarGrid.innerHTML = '';
+
+        // 計算該月第一天是星期幾
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        // 計算該月有幾天
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        // 填補前面的空白格子
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'day-cell empty';
+            calendarGrid.appendChild(emptyCell);
+        }
+
+        // 產生日期
+        for (let d = 1; d <= daysInMonth; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell';
+            cell.textContent = d;
+            
+            // 點擊切換狀態
+            cell.onclick = () => toggleStatus(cell);
+            
+            calendarGrid.appendChild(cell);
+        }
+    }
+
+    // 狀態切換邏輯 (正常 -> 滿 -> 休 -> 正常)
+    function toggleStatus(element) {
+        if (element.classList.contains('full')) {
+            // 如果是滿，變成休
+            element.classList.remove('full');
+            element.classList.add('off');
+        } else if (element.classList.contains('off')) {
+            // 如果是休，變回正常
+            element.classList.remove('off');
+        } else {
+            // 如果是正常，變成滿
+            element.classList.add('full');
+        }
+    }
+
+    // 處理背景圖片上傳
+    function handleBgUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                captureArea.style.backgroundImage = `url(${event.target.result})`;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // 下載圖片 (使用 html2canvas)
+    function downloadImage() {
+        html2canvas(captureArea, {
+            scale: 2, // 提高解析度
+            backgroundColor: null
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `yona-schedule-${monthPicker.value}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    }
+</script>
+
+</body>
+</html>
