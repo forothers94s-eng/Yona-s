@@ -273,4 +273,153 @@
 
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-        <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--
+        <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--text);">📝 添加備註 (顯示在底部)</h4>
+        <textarea id="noteInput" class="note-input" placeholder="例如：\n⚠️ 預約保留10分鐘\n⚠️ 請勿攜伴前往"></textarea>
+
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <label class="btn secondary">
+                📷 換底圖
+                <input type="file" id="bgInput" accept="image/*" style="display: none;">
+            </label>
+            <button class="btn" onclick="downloadImage()">⬇️ 下載圖片</button>
+        </div>
+
+        <div class="controls-list" id="controlsList">
+            </div>
+    </div>
+
+    <div id="capture-area">
+        <div class="overlay"></div>
+        
+        <div class="content-box">
+            <h1>Yona's nail studio</h1>
+            <div class="subtitle">Available Appointments</div>
+
+            <div class="schedule-list" id="scheduleList">
+            </div>
+
+            <div id="noteDisplay" class="note-box"></div>
+
+            <div class="footer-text">RESERVATION ONLY</div>
+        </div>
+    </div>
+
+<script>
+    const dateInput = document.getElementById('dateInput');
+    const timeInput = document.getElementById('timeInput');
+    const noteInput = document.getElementById('noteInput'); // 備註輸入
+    const noteDisplay = document.getElementById('noteDisplay'); // 備註顯示
+    
+    const scheduleList = document.getElementById('scheduleList');
+    const controlsList = document.getElementById('controlsList');
+    const bgInput = document.getElementById('bgInput');
+    const captureArea = document.getElementById('capture-area');
+
+    let appointments = [];
+
+    // 初始化日期選單為今天
+    dateInput.valueAsDate = new Date();
+
+    bgInput.addEventListener('change', handleBgUpload);
+    
+    // 監聽備註輸入，即時更新畫面
+    noteInput.addEventListener('input', function() {
+        noteDisplay.textContent = this.value;
+        if (this.value.trim() !== "") {
+            noteDisplay.style.display = 'block'; // 有字就顯示
+        } else {
+            noteDisplay.style.display = 'none'; // 沒字就隱藏
+        }
+    });
+
+    function addItem() {
+        const dateVal = dateInput.value;
+        const timeVal = timeInput.value.trim();
+
+        if (!dateVal || !timeVal) {
+            alert("請選擇日期並輸入時間喔！");
+            return;
+        }
+
+        appointments.push({
+            date: dateVal,
+            times: timeVal
+        });
+
+        // 排序：由近到遠
+        appointments.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        timeInput.value = '';
+        render();
+    }
+
+    function deleteItem(index) {
+        appointments.splice(index, 1);
+        render();
+    }
+
+    function render() {
+        scheduleList.innerHTML = '';
+        controlsList.innerHTML = '';
+
+        appointments.forEach((item, index) => {
+            const dateObj = new Date(item.date);
+            const month = dateObj.getMonth() + 1;
+            const date = dateObj.getDate();
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const week = days[dateObj.getDay()];
+
+            // 圖片區卡片
+            const card = document.createElement('div');
+            card.className = 'schedule-item';
+            card.innerHTML = `
+                <div class="item-date">
+                    <span class="date-main">${month}/${date}</span>
+                    <span class="date-week">${week}</span>
+                </div>
+                <div class="item-times">${item.times}</div>
+            `;
+            scheduleList.appendChild(card);
+
+            // 控制區列表
+            const ctrlItem = document.createElement('div');
+            ctrlItem.className = 'control-item';
+            ctrlItem.innerHTML = `
+                <span>${month}/${date} (${week}) - ${item.times.replace(/\n/g, ' ')}</span>
+                <button class="btn-delete-item" onclick="deleteItem(${index})">🗑️</button>
+            `;
+            controlsList.appendChild(ctrlItem);
+        });
+    }
+
+    function handleBgUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                captureArea.style.backgroundImage = `url(${event.target.result})`;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function downloadImage() {
+        const originalHeight = captureArea.style.height;
+        captureArea.style.height = 'auto'; 
+        
+        html2canvas(captureArea, {
+            scale: 2,
+            backgroundColor: null,
+            useCORS: true
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `yona-schedule.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            captureArea.style.height = originalHeight;
+        });
+    }
+</script>
+
+</body>
+</html>
