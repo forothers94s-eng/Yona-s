@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Yona's Chat V3</title>
+<title>Yona's Chat V4</title>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
@@ -11,10 +11,9 @@
     :root {
         --bg-color: #FDFCF8;
         --chat-bg: #EAEAEA;
-        --primary: #B09B88; /* 奶茶棕 */
-        --accent: #D4A373; /* 橘 */
-        --self-bubble: #D4A373; /* 自己訊息顏色 */
-        --other-bubble: #FFFFFF; /* 對方訊息顏色 */
+        --primary: #B09B88;
+        --self-bubble: #D4A373;
+        --other-bubble: #FFFFFF;
         --text-main: #5A544F;
     }
 
@@ -30,7 +29,7 @@
         overflow: hidden;
     }
 
-    /* --- 1. 登入畫面 --- */
+    /* 登入畫面 */
     #login-screen {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: var(--bg-color); z-index: 100;
@@ -50,12 +49,12 @@
         box-shadow: 0 5px 15px rgba(176,155,136,0.3);
     }
 
-    /* --- 2. 聊天室主體 --- */
+    /* 聊天室主體 */
     #chat-container {
         flex: 1; display: none; flex-direction: column; height: 100%;
     }
 
-    /* 頂部導航 */
+    /* Header */
     .chat-header {
         background: rgba(253, 252, 248, 0.95);
         padding: 10px 15px;
@@ -74,7 +73,7 @@
     }
     .btn-small.danger { border-color: #E08D8D; color: #E08D8D; }
 
-    /* 訊息顯示區 */
+    /* 訊息區 */
     #messages-area {
         flex: 1; padding: 20px; overflow-y: auto;
         display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth;
@@ -84,8 +83,23 @@
     .msg-row.self { align-self: flex-end; align-items: flex-end; }
     .msg-row.other { align-self: flex-start; align-items: flex-start; }
     
-    .sender-name { font-size: 11px; color: #999; margin-bottom: 3px; margin-left: 5px; }
-    .msg-row.self .sender-name { display: none; }
+    /* --- 名字顯示設定 (這是這次修改的重點) --- */
+    .sender-name {
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 4px;
+        font-weight: bold;
+    }
+    /* 自己的名字靠右 */
+    .msg-row.self .sender-name {
+        margin-right: 5px;
+        text-align: right;
+    }
+    /* 對方的名字靠左 */
+    .msg-row.other .sender-name {
+        margin-left: 5px;
+        text-align: left;
+    }
 
     .bubble {
         padding: 10px 15px; border-radius: 18px; font-size: 15px; line-height: 1.5;
@@ -96,7 +110,6 @@
     
     .time-tag { font-size: 9px; opacity: 0.6; margin-left: 6px; vertical-align: bottom; }
 
-    /* 系統訊息 / 分隔線 */
     .system-msg {
         align-self: center; background: rgba(0,0,0,0.05); color: #888;
         font-size: 11px; padding: 4px 12px; border-radius: 10px; margin: 10px 0;
@@ -108,7 +121,7 @@
         content: ""; flex: 1; height: 1px; background: #ddd; margin: 0 10px;
     }
 
-    /* 底部輸入區 */
+    /* 輸入區 */
     .input-area {
         background: white; padding: 10px; padding-bottom: max(10px, env(safe-area-inset-bottom));
         display: flex; gap: 10px; border-top: 1px solid #EEE;
@@ -118,7 +131,6 @@
         background: var(--primary); color: white; border: none; width: 44px; height: 44px;
         border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
         box-shadow: 0 2px 8px rgba(176,155,136,0.4);
-        transition: 0.1s;
     }
     .btn-send:active { transform: scale(0.95); }
 
@@ -127,7 +139,7 @@
 <body>
 
     <div id="login-screen">
-        <h1>Yona's Chat 💬</h1>
+        <h1>Yona's Chat V4</h1>
         <input type="text" id="username" placeholder="請輸入您的暱稱" maxlength="12">
         <button class="btn-join" onclick="joinChat()">進入聊天室</button>
         <p style="font-size:12px; color:#aaa; margin-top:20px;">
@@ -147,8 +159,7 @@
             </div>
         </div>
 
-        <div id="messages-area">
-            </div>
+        <div id="messages-area"></div>
 
         <div class="input-area">
             <input type="text" id="msg-input" placeholder="輸入訊息..." autocomplete="off">
@@ -157,9 +168,8 @@
     </div>
 
 <script>
-    // --- 設定區 ---
-    const CHAT_TOPIC = 'yona/secret/chat/v3'; // 頻道ID
-    const STORAGE_KEY = 'yona_chat_history_v3'; // 存檔鑰匙
+    const CHAT_TOPIC = 'yona/secret/chat/v4'; 
+    const STORAGE_KEY = 'yona_chat_history_v4'; 
     
     let client;
     let myName = '';
@@ -167,31 +177,23 @@
     const msgInput = document.getElementById('msg-input');
     const statusDot = document.getElementById('status-dot');
 
-    // 按 Enter 發送
     msgInput.addEventListener('keypress', function (e) {
         if (e.key === 'Enter') sendMessage();
     });
 
-    // 1. 加入聊天室
     function joinChat() {
         const inputName = document.getElementById('username').value.trim();
         if (!inputName) { alert('請輸入暱稱喔！'); return; }
 
         myName = inputName;
-        
-        // 介面切換
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('chat-container').style.display = 'flex';
         document.getElementById('room-title').textContent = `${myName} 的聊天室`;
 
-        // 先讀取舊紀錄
         loadHistory();
-
-        // 開始連線
         connectToMQTT();
     }
 
-    // 2. 連線設定
     function connectToMQTT() {
         const clientId = 'client_' + Math.random().toString(16).substr(2, 8);
         const host = 'wss://broker.emqx.io:8084/mqtt';
@@ -200,24 +202,16 @@
 
         client.on('connect', function () {
             console.log('Connected');
-            statusDot.style.backgroundColor = '#4CD964'; // 亮綠燈
+            statusDot.style.backgroundColor = '#4CD964';
             statusDot.style.boxShadow = '0 0 6px #4CD964';
-            
-            // 訂閱頻道
             client.subscribe(CHAT_TOPIC);
         });
 
-        // 收到訊息時...
         client.on('message', function (topic, message) {
             try {
                 const data = JSON.parse(message.toString());
-                
-                // 顯示在畫面上
                 displayMessage(data);
-                
-                // 存入手機記憶體 (這裡就是雙方都能存檔的關鍵！)
                 saveMessageToLocal(data);
-                
             } catch (e) { console.error(e); }
         });
         
@@ -227,22 +221,18 @@
         });
     }
 
-    // 3. 發送訊息
     function sendMessage() {
         const text = msgInput.value.trim();
         if (!text) return;
 
         const payload = {
-            id: Date.now(),      // 唯一識別碼
-            sender: myName,      // 誰傳的
-            content: text,       // 內容
+            id: Date.now(),
+            sender: myName,
+            content: text,
             time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric"})
         };
 
-        // 透過網路傳給對方
         client.publish(CHAT_TOPIC, JSON.stringify(payload), { retain: false });
-        
-        // 因為 MQTT 通常不回傳自己發的訊息，所以我們要「手動」顯示自己這則，並存起來
         displayMessage(payload);
         saveMessageToLocal(payload);
 
@@ -250,9 +240,7 @@
         msgInput.focus();
     }
 
-    // 4. 把訊息畫在螢幕上
     function displayMessage(data) {
-        // 防止重複顯示 (如果 ID 已存在就不畫)
         if (document.getElementById(`msg-${data.id}`)) return;
 
         const isSelf = (data.sender === myName);
@@ -273,47 +261,27 @@
         scrollToBottom();
     }
 
-    // 5. 儲存功能 (關鍵!)
     function saveMessageToLocal(msgData) {
-        // 讀出舊資料
         let history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        
-        // 檢查是否重複
         const exists = history.some(h => h.id === msgData.id);
         if (!exists) {
             history.push(msgData);
-            // 限制最多存 200 則，避免手機跑不動
             if (history.length > 200) history.shift();
-            
-            // 寫入手機
             localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
         }
     }
 
-    // 6. 讀取歷史功能
     function loadHistory() {
         let history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        
         if (history.length > 0) {
-            // 顯示歷史分隔線
             const divider = document.createElement('div');
             divider.className = 'history-divider';
             divider.textContent = '上次的對話紀錄';
             messagesArea.appendChild(divider);
-
-            history.forEach(data => {
-                displayMessage(data);
-            });
-            
-            // 顯示一條系統訊息
-            const sys = document.createElement('div');
-            sys.className = 'system-msg';
-            sys.textContent = '紀錄已載入';
-            messagesArea.appendChild(sys);
+            history.forEach(data => displayMessage(data));
         }
     }
 
-    // 7. 清除紀錄
     function clearHistory() {
         if(confirm('確定要清除所有紀錄嗎？(無法復原)')) {
             localStorage.removeItem(STORAGE_KEY);
@@ -321,12 +289,9 @@
         }
     }
 
-    // 8. 存圖功能
     function saveImage() {
         const originalHeight = messagesArea.style.height;
         const originalOverflow = messagesArea.style.overflow;
-        
-        // 強制展開所有內容以供截圖
         messagesArea.style.height = 'auto';
         messagesArea.style.overflow = 'visible';
         document.body.style.height = 'auto';
