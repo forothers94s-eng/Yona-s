@@ -103,4 +103,359 @@
     /* 清單 */
     .expense-list { list-style: none; padding: 0; margin: 0; }
     .expense-item {
-        padding: 15px 0; border-bottom: 1px dashed
+        padding: 15px 0; border-bottom: 1px dashed #EEE;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .item-info { flex: 1; }
+    .item-title { font-weight: bold; font-size: 15px; margin-bottom: 4px; }
+    .item-sub { font-size: 12px; color: #BBB; }
+    .payer-badge { background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
+
+    .item-right { text-align: right; }
+    .item-price { font-weight: bold; font-size: 16px; color: var(--text-main); }
+    .btn-del { color: #DDD; background: none; border: none; font-size: 18px; cursor: pointer; padding: 5px; }
+
+    /* 報表 Modal */
+    #report-modal {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5); z-index: 200;
+        display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    #receipt-paper {
+        background: #FFF; width: 100%; max-width: 400px;
+        padding: 30px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        max-height: 85vh; overflow-y: auto;
+        font-family: 'Courier Prime', 'Noto Sans TC', monospace;
+        position: relative;
+    }
+    #receipt-paper::before {
+        content: ""; position: absolute; top: -5px; left: 0; right: 0; height: 10px;
+        background: radial-gradient(circle, transparent 5px, #fff 5px) repeat-x; background-size: 10px 10px;
+    }
+
+    .receipt-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; line-height: 1.4; }
+    .receipt-divider { border-bottom: 1px dashed #CCC; margin: 15px 0; }
+    
+    .settlement-block {
+        background: #F9F9F9; padding: 15px; border-radius: 8px; margin-top: 15px;
+    }
+    .settlement-row {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 8px; font-size: 13px; border-bottom: 1px dotted #E0E0E0; padding-bottom: 4px;
+    }
+    .settlement-row:last-child { border-bottom: none; }
+    .s-arrow { color: #AAA; font-size: 10px; margin: 0 5px; }
+    .s-amount { font-weight: bold; color: var(--text-main); }
+
+</style>
+</head>
+<body>
+
+    <h1>Travel Splitter</h1>
+    
+    <div class="card">
+        <label class="setting-label">👥 旅程成員名單 (有名單才算人頭)</label>
+        <div class="member-list" id="memberTags">
+            </div>
+        <div class="add-row">
+            <input type="text" id="newMemberName" placeholder="輸入名字 (如: 我, 老公, 小美)" style="font-size:14px;">
+            <button class="btn secondary" onclick="addMember()" style="width:auto; margin:0;">新增成員</button>
+        </div>
+        <div style="font-size:12px; color:#999; margin-top:5px; text-align:right;">
+            目前總人數: <span id="totalCountDisplay" style="font-weight:bold; color:var(--primary);">0</span> 人
+        </div>
+    </div>
+
+    <div class="card">
+        <label class="setting-label">👇 誰先付的錢？ (Payer)</label>
+        <div class="payer-selector" id="payerButtons">
+            <div style="font-size:12px; color:#bbb; padding:10px;">請先新增成員...</div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <input type="date" id="dateInput">
+            <input type="time" id="timeInput">
+        </div>
+        
+        <input type="text" id="itemName" placeholder="消費項目 (如: 晚餐)" style="margin-bottom:10px;">
+        <input type="number" id="priceInput" placeholder="金額 $" inputmode="numeric">
+        
+        <button class="btn" onclick="addExpense()">＋ 記一筆</button>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0; font-size:14px; color:var(--text-sub);">消費明細</h3>
+            <button onclick="showReport()" style="background:none; border:1px solid var(--primary); color:var(--primary); padding:6px 12px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:bold;">
+                🧾 產出結算表
+            </button>
+        </div>
+        <ul class="expense-list" id="list">
+            <li style="text-align:center; padding:20px; color:#ddd;">暫無資料</li>
+        </ul>
+    </div>
+
+    <div id="report-modal">
+        <div id="receipt-paper">
+            <div style="text-align:center; border-bottom:2px dashed #333; padding-bottom:15px; margin-bottom:15px;">
+                <div style="font-size:20px; font-weight:bold;">Trip Expenses</div>
+                <div style="font-size:12px; color:#888;" id="reportDate"></div>
+                <div style="font-size:12px; color:#888; margin-top:5px;">Total Members: <span id="reportMemberCount">0</span></div>
+            </div>
+
+            <div id="report-list"></div>
+
+            <div class="receipt-divider"></div>
+
+            <div class="receipt-row">
+                <span>Total Cost</span>
+                <span id="report-total" style="font-weight:bold;">$0</span>
+            </div>
+            <div class="receipt-row">
+                <span>Avg / Person</span>
+                <span id="report-avg" style="color:var(--accent); font-weight:bold;">$0</span>
+            </div>
+
+            <div class="settlement-block">
+                <div style="text-align:center; font-size:12px; margin-bottom:10px; font-weight:bold; color:#555;">SETTLEMENT (結算建議)</div>
+                <div id="report-settlement"></div>
+            </div>
+
+            <div style="margin-top:20px; text-align:center;">
+                <button class="btn" onclick="downloadReport()">⬇️ 下載圖片</button>
+                <button class="btn" onclick="closeReport()" style="background:#ddd; color:#555; margin-top:5px;">關閉</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // 資料
+    let members = ['我', '老公']; // 預設名單
+    let expenses = [];
+    let currentPayer = '';
+
+    // 初始化
+    const dateInput = document.getElementById('dateInput');
+    const timeInput = document.getElementById('timeInput');
+    const now = new Date();
+    dateInput.value = now.toISOString().split('T')[0];
+    timeInput.value = now.toTimeString().slice(0, 5);
+
+    renderMemberUI();
+
+    // --- 成員管理邏輯 ---
+    function renderMemberUI() {
+        const tagContainer = document.getElementById('memberTags');
+        const btnContainer = document.getElementById('payerButtons');
+        
+        tagContainer.innerHTML = '';
+        btnContainer.innerHTML = '';
+
+        members.forEach((name, index) => {
+            // 1. 名單標籤
+            const tag = document.createElement('div');
+            tag.className = 'member-tag';
+            tag.innerHTML = `${name} <button class="btn-remove" onclick="removeMember(${index})">×</button>`;
+            tagContainer.appendChild(tag);
+
+            // 2. 付款按鈕
+            const btn = document.createElement('div');
+            btn.className = `payer-btn ${currentPayer === name ? 'active' : ''}`;
+            btn.textContent = name;
+            btn.onclick = () => {
+                currentPayer = name;
+                renderMemberUI(); // 更新樣式
+            };
+            btnContainer.appendChild(btn);
+        });
+
+        document.getElementById('totalCountDisplay').textContent = members.length;
+
+        // 自動選取第一個人
+        if (!members.includes(currentPayer) && members.length > 0) {
+            currentPayer = members[0];
+            setTimeout(renderMemberUI, 0);
+        }
+    }
+
+    function addMember() {
+        const input = document.getElementById('newMemberName');
+        const name = input.value.trim();
+        if (name && !members.includes(name)) {
+            members.push(name);
+            input.value = '';
+            renderMemberUI();
+        } else if (members.includes(name)) {
+            alert('這個名字已經有了喔！');
+        }
+    }
+
+    function removeMember(index) {
+        if (confirm(`確定要移除「${members[index]}」嗎？(如果他有付過錢，帳目會保留，但人數分母會變少喔！)`)) {
+            members.splice(index, 1);
+            renderMemberUI();
+        }
+    }
+
+    // --- 記帳邏輯 ---
+    function addExpense() {
+        const name = document.getElementById('itemName').value.trim();
+        const price = parseInt(document.getElementById('priceInput').value);
+        
+        if (members.length === 0) { alert('請先新增成員！'); return; }
+        if (!currentPayer) { alert('請選擇誰付錢！'); return; }
+        if (!name || isNaN(price)) { alert('請輸入項目和金額'); return; }
+
+        expenses.push({
+            id: Date.now(),
+            date: dateInput.value,
+            time: timeInput.value,
+            item: name,
+            price: price,
+            payer: currentPayer
+        });
+
+        document.getElementById('itemName').value = '';
+        document.getElementById('priceInput').value = '';
+        renderList();
+    }
+
+    function deleteExpense(id) {
+        if(confirm('刪除這筆？')) {
+            expenses = expenses.filter(e => e.id !== id);
+            renderList();
+        }
+    }
+
+    function renderList() {
+        const list = document.getElementById('list');
+        list.innerHTML = '';
+        
+        expenses.sort((a, b) => b.id - a.id).forEach(e => {
+            const li = document.createElement('li');
+            li.className = 'expense-item';
+            const d = new Date(e.date);
+            li.innerHTML = `
+                <div class="item-info">
+                    <div class="item-title">${e.item}</div>
+                    <div class="item-sub">
+                        <span class="payer-badge">${e.payer}</span>
+                        ${d.getMonth()+1}/${d.getDate()} ${e.time}
+                    </div>
+                </div>
+                <div class="item-right">
+                    <div class="item-price">$${e.price.toLocaleString()}</div>
+                    <button class="btn-del" onclick="deleteExpense(${e.id})">🗑️</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+        
+        if(expenses.length === 0) list.innerHTML = '<li style="text-align:center; padding:20px; color:#ddd;">暫無資料</li>';
+    }
+
+    // --- 核心：結算邏輯 ---
+    function showReport() {
+        const modal = document.getElementById('report-modal');
+        const reportList = document.getElementById('report-list');
+        const reportSettlement = document.getElementById('report-settlement');
+        
+        document.getElementById('reportDate').textContent = new Date().toLocaleString();
+        document.getElementById('reportMemberCount').textContent = members.length;
+        reportList.innerHTML = '';
+        
+        // 1. 統計總花費 & 每個人付了多少
+        let totalCost = 0;
+        let paidMap = {}; 
+        
+        // 初始化所有人付費為 0
+        members.forEach(m => paidMap[m] = 0);
+        
+        // 依序計算
+        const sortedExpenses = [...expenses].sort((a, b) => a.id - b.id);
+        sortedExpenses.forEach(e => {
+            totalCost += e.price;
+            
+            // 如果付錢的人已經不在名單裡(被刪除)，我們還是要記上一筆，只是無法參與分母
+            if (paidMap[e.payer] === undefined) paidMap[e.payer] = 0;
+            paidMap[e.payer] += e.price;
+
+            const row = document.createElement('div');
+            row.className = 'receipt-row';
+            row.innerHTML = `
+                <div style="flex:2;">${e.item} <span style="font-size:10px; color:#999;">(${e.payer})</span></div>
+                <div style="flex:1; text-align:right;">$${e.price.toLocaleString()}</div>
+            `;
+            reportList.appendChild(row);
+        });
+
+        // 2. 計算平均 (分母就是名單上的人數)
+        // 數學公式：總花費 / 名單人數
+        const memberCount = members.length;
+        const avg = memberCount > 0 ? Math.ceil(totalCost / memberCount) : 0;
+
+        document.getElementById('report-total').textContent = `$${totalCost.toLocaleString()}`;
+        document.getElementById('report-avg').textContent = `$${avg.toLocaleString()}`;
+
+        // 3. 計算每個人的餘額 (Balance)
+        // 餘額 = 他付的錢 - 他該付的平均值
+        let balances = [];
+        
+        members.forEach(name => {
+            const paid = paidMap[name] || 0;
+            const balance = paid - avg;
+            balances.push({ name: name, balance: balance });
+        });
+
+        // 4. 配對 (Debtors vs Creditors)
+        let debtors = balances.filter(p => p.balance < 0).sort((a,b) => a.balance - b.balance);
+        let creditors = balances.filter(p => p.balance > 0).sort((a,b) => b.balance - a.balance);
+
+        let html = '';
+        let i = 0, j = 0;
+
+        while (i < debtors.length && j < creditors.length) {
+            let debtor = debtors[i];
+            let creditor = creditors[j];
+            let debt = Math.abs(debtor.balance);
+            let credit = creditor.balance;
+            let amount = Math.min(debt, credit);
+
+            if (amount > 0) {
+                html += `
+                    <div class="settlement-row">
+                        <span>${debtor.name} <span class="s-arrow">➔ 給 ➔</span> ${creditor.name}</span>
+                        <span class="s-amount">$${Math.ceil(amount).toLocaleString()}</span>
+                    </div>
+                `;
+            }
+
+            debtor.balance += amount;
+            creditor.balance -= amount;
+
+            if (Math.abs(debtor.balance) < 1) i++; // 結清換下一位
+            if (creditor.balance < 1) j++; // 結清換下一位
+        }
+
+        reportSettlement.innerHTML = html || '<div style="text-align:center; color:#999;">帳務平衡 (每人都付得剛剛好)</div>';
+        
+        modal.style.display = 'flex';
+    }
+
+    function closeReport() {
+        document.getElementById('report-modal').style.display = 'none';
+    }
+
+    function downloadReport() {
+        const paper = document.getElementById('receipt-paper');
+        html2canvas(paper, { scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'travel-settlement.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    }
+</script>
+
+</body>
+</html>
