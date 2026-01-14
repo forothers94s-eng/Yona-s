@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Yona's Secret Talk</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg-color: #FDFCF8;
+        --chat-bg: #EAEAEA;
+        --primary: #B09B88; /* 奶茶棕 */
+        --self-bubble: #D4A373; /* 橘棕 (自己) */
+        --other-bubble: #FFFFFF; /* 白 (別人) */
+        --text-main: #5A544F;
+        --radius: 16px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+        font-family: 'Quicksand', 'Noto Sans TC', sans-serif;
+        background-color: var(--chat-bg);
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* 防止整個頁面滾動 */
+    }
+
+    /* --- 1. 登入層 (Login Layer) --- */
+    #login-screen {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--bg-color);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+    }
+
+    h1 {
+        color: var(--primary);
+        font-family: 'Quicksand', sans-serif;
+        margin-bottom: 30px;
+        font-size: 28px;
+    }
+
+    input[type="text"] {
+        width: 100%; max-width: 300px;
+        padding: 15px;
+        border: 2px solid #EEE;
+        border-radius: 30px;
+        font-size: 16px;
+        text-align: center;
+        outline: none;
+        transition: 0.3s;
+        background: #FAFAFA;
+    }
+    input[type="text"]:focus { border-color: var(--primary); background: #FFF; }
+
+    .btn-join {
+        margin-top: 20px;
+        padding: 12px 40px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(176,155,136,0.3);
+    }
+
+    /* --- 2. 聊天室主體 --- */
+    #chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        display: none; /* 登入後開啟 */
+        height: 100%;
+    }
+
+    /* 頂部導航 */
+    .chat-header {
+        background: rgba(253, 252, 248, 0.95);
+        padding: 15px;
+        text-align: center;
+        color: var(--primary);
+        font-weight: bold;
+        border-bottom: 1px solid #ddd;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .status-dot { width: 8px; height: 8px; background: #CCC; border-radius: 50%; display: inline-block; }
+    .status-dot.online { background: #4CD964; box-shadow: 0 0 5px #4CD964; }
+
+    /* 訊息顯示區 */
+    #messages-area {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        scroll-behavior: smooth;
+    }
+
+    /* 對話框樣式 */
+    .msg-row {
+        display: flex;
+        flex-direction: column;
+        max-width: 75%;
+    }
+    .msg-row.self { align-self: flex-end; align-items: flex-end; }
+    .msg-row.other { align-self: flex-start; align-items: flex-start; }
+
+    .sender-name {
+        font-size: 11px; color: #999; margin-bottom: 3px; margin-left: 5px;
+    }
+    .msg-row.self .sender-name { display: none; } /* 自己不顯示名字 */
+
+    .bubble {
+        padding: 10px 15px;
+        border-radius: 18px;
+        font-size: 15px;
+        line-height: 1.5;
+        position: relative;
+        word-wrap: break-word;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* 自己的氣泡 */
+    .msg-row.self .bubble {
+        background: var(--self-bubble);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    /* 對方的氣泡 */
+    .msg-row.other .bubble {
+        background: var(--other-bubble);
+        color: var(--text-main);
+        border-bottom-left-radius: 4px;
+    }
+
+    .system-msg {
+        align-self: center;
+        background: rgba(0,0,0,0.1);
+        color: #666;
+        font-size: 11px;
+        padding: 4px 12px;
+        border-radius: 10px;
+        margin: 10px 0;
+    }
+
+    /* 底部輸入區 */
+    .input-area {
+        background: white;
+        padding: 10px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        display: flex;
+        gap: 10px;
+        border-top: 1px solid #EEE;
+    }
+    
+    #msg-input {
+        flex: 1;
+        background: #F0F0F0;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 15px;
+        outline: none;
+    }
+    
+    .btn-send {
+        background: var(--primary);
+        color: white;
+        border: none;
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+</style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h1>Secret Talk 🤫</h1>
+        <input type="text" id="username" placeholder="請輸入暱稱" maxlength="10">
+        <button class="btn-join" onclick="joinChat()">進入聊天室</button>
+        <p style="font-size:12px; color:#999; margin-top:20px;">
+            ⚠️ 注意：離開網頁後對話將直接消失
+        </p>
+    </div>
+
+    <div id="chat-container">
+        <div class="chat-header">
+            <span style="font-size:18px; cursor:pointer;" onclick="location.reload()">🚪</span>
+            <span>Yona's Room</span>
+            <div id="status" class="status-dot"></div>
+        </div>
+
+        <div id="messages-area">
+            <div class="system-msg">歡迎來到匿名聊天室，紀錄不會保存。</div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="輸入訊息..." autocomplete="off">
+            <button class="btn-send" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+<script>
+    // --- 設定區 ---
+    // 使用公開免費的 MQTT Broker (emqx.io)
+    // 為了避免跟別人的聊天室撞名，我們設定一個特定的 Topic
+    const CHAT_TOPIC = 'yona/secret/chat/v1'; 
+    
+    let client;
+    let myName = '';
+    const messagesArea = document.getElementById('messages-area');
+    const msgInput = document.getElementById('msg-input');
+    const statusDot = document.getElementById('status');
+
+    // 綁定 Enter 鍵發送
+    msgInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // 1. 加入聊天室
+    function joinChat() {
+        const inputName = document.getElementById('username').value.trim();
+        if (!inputName) { alert('請輸入暱稱喔！'); return; }
+
+        myName = inputName;
+        
+        // 切換畫面
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+
+        connectToMQTT();
+    }
+
+    // 2. 連線到 MQTT Server
+    function connectToMQTT() {
+        const clientId = 'mqttjs_' + Math.random().toString(16).substr(2, 8);
+        const host = 'wss://broker.emqx.io:8084/mqtt'; // 使用 WSS (加密 WebSocket)
+
+        client = mqtt.connect(host, {
+            clientId: clientId
+        });
+
+        client.on('connect', function () {
+            console.log('Connected to MQTT broker');
+            statusDot.classList.add('online'); // 亮綠燈
+            
+            // 訂閱聊天室主題
+            client.subscribe(CHAT_TOPIC, function (err) {
+                if (!err) {
+                    // 發送加入通知 (System Message)
+                    publishMessage('system', `${myName} 加入了聊天室`);
+                }
+            });
+        });
+
+        // 3. 接收訊息
+        client.on('message', function (topic, message) {
+            // message 是 Buffer，要轉成字串
+            try {
+                const data = JSON.parse(message.toString());
+                displayMessage(data);
+            } catch (e) {
+                console.error("解析訊息錯誤", e);
+            }
+        });
+        
+        client.on('offline', () => statusDot.classList.remove('online'));
+        client.on('reconnect', () => console.log('Reconnecting...'));
+    }
+
+    // 4. 發送訊息
+    function sendMessage() {
+        const text = msgInput.value.trim();
+        if (!text) return;
+
+        publishMessage('chat', text);
+        msgInput.value = ''; // 清空輸入框
+    }
+
+    function publishMessage(type, content) {
+        if (!client || !client.connected) {
+            alert('連線中斷，請稍候...');
+            return;
+        }
+
+        const payload = {
+            id: Date.now(),      // 唯一ID
+            sender: myName,      // 發送者
+            type: type,          // 'chat' 或 'system'
+            content: content,    // 內容
+            time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric"})
+        };
+
+        // 發送出去！
+        // retain: false 代表不保留訊息 (閱後即焚，新加入的人看不到舊的)
+        client.publish(CHAT_TOPIC, JSON.stringify(payload), { retain: false });
+    }
+
+    // 5. 顯示訊息在畫面上
+    function displayMessage(data) {
+        // 如果是系統訊息
+        if (data.type === 'system') {
+            const div = document.createElement('div');
+            div.className = 'system-msg';
+            div.textContent = data.content;
+            messagesArea.appendChild(div);
+            scrollToBottom();
+            return;
+        }
+
+        // 一般對話
+        const isSelf = (data.sender === myName);
+        
+        const row = document.createElement('div');
+        row.className = `msg-row ${isSelf ? 'self' : 'other'}`;
+        
+        row.innerHTML = `
+            <div class="sender-name">${data.sender}</div>
+            <div class="bubble">
+                ${escapeHtml(data.content)}
+                <span style="font-size:9px; opacity:0.6; margin-left:5px;">${data.time}</span>
+            </div>
+        `;
+        
+        messagesArea.appendChild(row);
+        scrollToBottom();
+    }
+
+    function scrollToBottom() {
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    // 防 XSS 攻擊 (簡單版)
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+
+</body>
+</html>
