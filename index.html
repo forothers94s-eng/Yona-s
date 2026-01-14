@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Nail Art Budget | 美甲預算</title>
+<title>Yons's nail studio | 美甲預算</title>
 <style>
 /* --- 變數與重置 (Variables & Reset) --- */
 :root {
@@ -353,31 +353,43 @@ z-index: 300;
 
 <div class="container">
 <header style="margin-bottom: 24px; text-align: center;">
-<h1 style="color: var(--primary); font-family: serif; letter-spacing: 1px;">Nail Studio</h1>
+<h1 style="color: var(--primary); font-family: serif; letter-spacing: 1px;">Yona's nail studio</h1>
 <p style="color: var(--text-sub); font-size: 12px;">預算計算機</p>
 </header>
 
 <section class="card">
 <h2>基礎保養/單色</h2>
 <div class="input-group">
-<label>基礎底價 (單色/跳色)</label>
-<input type="number" id="basePrice" value="1000" inputmode="numeric">
+<label>基礎底價 (單色)</label>
+<input type="number" id="basePrice" value="600" inputmode="numeric">
 </div>
 </section>
 
 <section class="card">
 <h2>加購項目</h2>
 <div class="checkbox-item">
-<label for="thickening">建構加厚 (+$300)</label>
-<input type="checkbox" id="thickening" value="300" data-name="建構加厚">
+<label for="thickening">跳色 (+$100)</label>
+<input type="checkbox" id="thickening" value="100" data-name="跳色">
 </div>
 <div class="checkbox-item">
-<label for="matte">霧面封層 (+$100)</label>
-<input type="checkbox" id="matte" value="100" data-name="霧面封層">
+<label for="thickening">貓眼 (+$200)</label>
+<input type="checkbox" id="thickening" value="200" data-name="貓眼">
 </div>
 <div class="checkbox-item">
-<label for="overlay">補強 (+$100/指)</label>
-<input type="checkbox" id="overlay" value="100" data-name="單指補強"> 
+<label for="thickening">造型 (+$200UP)</label>
+<input type="checkbox" id="thickening" value="200UP" data-name="款式造型">
+</div>
+<div class="checkbox-item">
+<label for="matte">立體造型 (+$100/指)</label>
+<input type="checkbox" id="matte" value="100" data-name="立體造型">
+</div>
+<div class="checkbox-item">
+<label for="overlay">手繪 (+$100/指)</label>
+<input type="checkbox" id="overlay" value="100" data-name="手繪"> 
+</div>
+<div class="checkbox-item">
+<label for="overlay">飾品 (+$20/指)</label>
+<input type="checkbox" id="overlay" value="20" data-name="飾品"> 
 </div>
 </section>
 
@@ -426,6 +438,17 @@ z-index: 300;
 <input type="number" id="adjustment" placeholder="-100 or 200" inputmode="numeric">
 </div>
 </section>
+  <section class="card">
+    <details style="cursor: pointer;">
+        <summary style="font-weight: 600; color: var(--primary); list-style: none; display: flex; align-items: center; justify-content: space-between;">
+            <span>📖 查看完整價目表</span>
+            <span style="font-size: 12px; color: var(--text-sub);">▼</span>
+        </summary>
+        <div style="margin-top: 16px; border-top: 1px dashed #EEE; padding-top: 16px;">
+            <img src="price-list.jpg" alt="價目表" style="width: 100%; border-radius: 8px; display: block;">
+        </div>
+    </details>
+</section>
 </div>
 
 <footer class="sticky-footer">
@@ -461,23 +484,21 @@ z-index: 300;
 <script>
 /* --- Configuration --- */
 const artTags = [
-{ name: '手繪', price: 150 },
 { name: '法式', price: 200 },
 { name: '漸層', price: 150 },
 { name: '暈染', price: 150 },
 { name: '鏡面', price: 100 },
-{ name: '貓眼', price: 100 },
-{ name: '滿鑽', price: 300 },
 { name: '貼紙', price: 50 },
-{ name: '小鑽', price: 50 }
 ];
 
 const waxTags = [
-{ name: '腋下', price: 500 },
-{ name: '全手', price: 800 },
-{ name: '全腿', price: 1200 },
-{ name: '私密處', price: 2000 },
-{ name: '手指', price: 200 }
+{ name: '腋下', price: 450 },
+{ name: '全手', price: 1100 },
+{ name: '全腿', price: 1500 },
+{ name: '私密處', price: 1350 },
+{ name: '私密處+腋下', price: 1700 },
+{ name: '私密處+小腿', price: 2100 },
+
 ];
 
 /* --- Initialization --- */
@@ -717,3 +738,4 @@ setTimeout(() => toast.classList.remove('show'), 2000);
 
 </body>
 </html>
+
