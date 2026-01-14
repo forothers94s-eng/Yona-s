@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yona's Splitter V7</title>
+<title>Yona's Splitter V7.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Quicksand:wght@500;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
@@ -47,24 +47,15 @@
         border: 1px solid rgba(0,0,0,0.02);
     }
 
-    /* 成員管理區 */
+    /* 成員設定 */
     .setting-label { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; display: block; font-weight: bold; }
     
     .member-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 10px;
+        display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
     }
     .member-tag {
-        background: #F0F0F0;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: #555;
+        background: #F0F0F0; padding: 6px 12px; border-radius: 20px;
+        font-size: 14px; display: flex; align-items: center; gap: 6px; color: #555;
     }
     .btn-remove {
         background: #CCC; color: white; border-radius: 50%; width: 18px; height: 18px;
@@ -80,7 +71,6 @@
         font-family: inherit;
     }
     
-    /* 付款人按鈕 */
     .payer-selector {
         display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
     }
@@ -155,10 +145,9 @@
     
     <div class="card">
         <label class="setting-label">👥 旅程成員名單 (有名單才算人頭)</label>
-        <div class="member-list" id="memberTags">
-            </div>
+        <div class="member-list" id="memberTags"></div>
         <div class="add-row">
-            <input type="text" id="newMemberName" placeholder="輸入名字 (如: 我, 老公, 小美)" style="font-size:14px;">
+            <input type="text" id="newMemberName" placeholder="輸入名字 (如: 我, 老公)" style="font-size:14px;">
             <button class="btn secondary" onclick="addMember()" style="width:auto; margin:0;">新增成員</button>
         </div>
         <div style="font-size:12px; color:#999; margin-top:5px; text-align:right;">
@@ -186,9 +175,7 @@
     <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="margin:0; font-size:14px; color:var(--text-sub);">消費明細</h3>
-            <button onclick="showReport()" style="background:none; border:1px solid var(--primary); color:var(--primary); padding:6px 12px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:bold;">
-                🧾 產出結算表
-            </button>
+            <button onclick="showReport()" style="background:none; border:1px solid var(--primary); color:var(--primary); padding:6px 12px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:bold;">🧾 產出結算表</button>
         </div>
         <ul class="expense-list" id="list">
             <li style="text-align:center; padding:20px; color:#ddd;">暫無資料</li>
@@ -229,21 +216,24 @@
     </div>
 
 <script>
-    // 資料
-    let members = ['我', '老公']; // 預設名單
+    // 資料初始設定
+    let members = ['我', '老公'];
     let expenses = [];
     let currentPayer = '';
 
-    // 初始化
+    // DOM 元素
     const dateInput = document.getElementById('dateInput');
     const timeInput = document.getElementById('timeInput');
+    
+    // 初始化時間
     const now = new Date();
     dateInput.value = now.toISOString().split('T')[0];
     timeInput.value = now.toTimeString().slice(0, 5);
 
+    // 啟動畫面
     renderMemberUI();
 
-    // --- 成員管理邏輯 ---
+    // --- 成員管理 ---
     function renderMemberUI() {
         const tagContainer = document.getElementById('memberTags');
         const btnContainer = document.getElementById('payerButtons');
@@ -251,31 +241,30 @@
         tagContainer.innerHTML = '';
         btnContainer.innerHTML = '';
 
+        // 防呆：如果當前選中的人已經被刪了，重置 currentPayer
+        if (members.length > 0 && !members.includes(currentPayer)) {
+            currentPayer = members[0];
+        }
+
         members.forEach((name, index) => {
-            // 1. 名單標籤
+            // 標籤
             const tag = document.createElement('div');
             tag.className = 'member-tag';
             tag.innerHTML = `${name} <button class="btn-remove" onclick="removeMember(${index})">×</button>`;
             tagContainer.appendChild(tag);
 
-            // 2. 付款按鈕
+            // 按鈕
             const btn = document.createElement('div');
             btn.className = `payer-btn ${currentPayer === name ? 'active' : ''}`;
             btn.textContent = name;
             btn.onclick = () => {
                 currentPayer = name;
-                renderMemberUI(); // 更新樣式
+                renderMemberUI(); // 只更新畫面樣式，不遞迴
             };
             btnContainer.appendChild(btn);
         });
 
         document.getElementById('totalCountDisplay').textContent = members.length;
-
-        // 自動選取第一個人
-        if (!members.includes(currentPayer) && members.length > 0) {
-            currentPayer = members[0];
-            setTimeout(renderMemberUI, 0);
-        }
     }
 
     function addMember() {
@@ -286,24 +275,23 @@
             input.value = '';
             renderMemberUI();
         } else if (members.includes(name)) {
-            alert('這個名字已經有了喔！');
+            alert('名字重複囉！');
         }
     }
 
     function removeMember(index) {
-        if (confirm(`確定要移除「${members[index]}」嗎？(如果他有付過錢，帳目會保留，但人數分母會變少喔！)`)) {
+        if (confirm(`移除「${members[index]}」？`)) {
             members.splice(index, 1);
             renderMemberUI();
         }
     }
 
-    // --- 記帳邏輯 ---
+    // --- 記帳 ---
     function addExpense() {
         const name = document.getElementById('itemName').value.trim();
         const price = parseInt(document.getElementById('priceInput').value);
         
-        if (members.length === 0) { alert('請先新增成員！'); return; }
-        if (!currentPayer) { alert('請選擇誰付錢！'); return; }
+        if (members.length === 0) { alert('請先新增成員'); return; }
         if (!name || isNaN(price)) { alert('請輸入項目和金額'); return; }
 
         expenses.push({
@@ -331,6 +319,7 @@
         const list = document.getElementById('list');
         list.innerHTML = '';
         
+        // 排序：新 -> 舊
         expenses.sort((a, b) => b.id - a.id).forEach(e => {
             const li = document.createElement('li');
             li.className = 'expense-item';
@@ -354,29 +343,30 @@
         if(expenses.length === 0) list.innerHTML = '<li style="text-align:center; padding:20px; color:#ddd;">暫無資料</li>';
     }
 
-    // --- 核心：結算邏輯 ---
+    // --- 結算報表 ---
     function showReport() {
         const modal = document.getElementById('report-modal');
         const reportList = document.getElementById('report-list');
         const reportSettlement = document.getElementById('report-settlement');
         
+        // 基礎資訊
         document.getElementById('reportDate').textContent = new Date().toLocaleString();
         document.getElementById('reportMemberCount').textContent = members.length;
         reportList.innerHTML = '';
         
-        // 1. 統計總花費 & 每個人付了多少
         let totalCost = 0;
-        let paidMap = {}; 
+        let paidMap = {};
         
-        // 初始化所有人付費為 0
+        // 初始化 Map
         members.forEach(m => paidMap[m] = 0);
         
-        // 依序計算
+        // 跑迴圈計算
+        // 排序：舊 -> 新 (報表習慣)
         const sortedExpenses = [...expenses].sort((a, b) => a.id - b.id);
         sortedExpenses.forEach(e => {
             totalCost += e.price;
             
-            // 如果付錢的人已經不在名單裡(被刪除)，我們還是要記上一筆，只是無法參與分母
+            // 即使付款人被刪了，也要記下來
             if (paidMap[e.payer] === undefined) paidMap[e.payer] = 0;
             paidMap[e.payer] += e.price;
 
@@ -389,25 +379,20 @@
             reportList.appendChild(row);
         });
 
-        // 2. 計算平均 (分母就是名單上的人數)
-        // 數學公式：總花費 / 名單人數
-        const memberCount = members.length;
-        const avg = memberCount > 0 ? Math.ceil(totalCost / memberCount) : 0;
+        // 計算平均
+        const avg = members.length > 0 ? Math.ceil(totalCost / members.length) : 0;
 
         document.getElementById('report-total').textContent = `$${totalCost.toLocaleString()}`;
         document.getElementById('report-avg').textContent = `$${avg.toLocaleString()}`;
 
-        // 3. 計算每個人的餘額 (Balance)
-        // 餘額 = 他付的錢 - 他該付的平均值
+        // 計算每人餘額 (Balance)
         let balances = [];
-        
         members.forEach(name => {
             const paid = paidMap[name] || 0;
-            const balance = paid - avg;
-            balances.push({ name: name, balance: balance });
+            balances.push({ name: name, balance: paid - avg });
         });
 
-        // 4. 配對 (Debtors vs Creditors)
+        // 配對 (欠錢 vs 收錢)
         let debtors = balances.filter(p => p.balance < 0).sort((a,b) => a.balance - b.balance);
         let creditors = balances.filter(p => p.balance > 0).sort((a,b) => b.balance - a.balance);
 
@@ -417,14 +402,14 @@
         while (i < debtors.length && j < creditors.length) {
             let debtor = debtors[i];
             let creditor = creditors[j];
-            let debt = Math.abs(debtor.balance);
-            let credit = creditor.balance;
-            let amount = Math.min(debt, credit);
+            let debt = Math.abs(debtor.balance); // 欠多少
+            let credit = creditor.balance;       // 該收多少
+            let amount = Math.min(debt, credit); // 這次只能還這麼多
 
             if (amount > 0) {
                 html += `
                     <div class="settlement-row">
-                        <span>${debtor.name} <span class="s-arrow">➔ 給 ➔</span> ${creditor.name}</span>
+                        <span>${debtor.name} <span class="s-arrow">➔</span> ${creditor.name}</span>
                         <span class="s-amount">$${Math.ceil(amount).toLocaleString()}</span>
                     </div>
                 `;
@@ -433,12 +418,11 @@
             debtor.balance += amount;
             creditor.balance -= amount;
 
-            if (Math.abs(debtor.balance) < 1) i++; // 結清換下一位
-            if (creditor.balance < 1) j++; // 結清換下一位
+            if (Math.abs(debtor.balance) < 1) i++;
+            if (creditor.balance < 1) j++;
         }
 
-        reportSettlement.innerHTML = html || '<div style="text-align:center; color:#999;">帳務平衡 (每人都付得剛剛好)</div>';
-        
+        reportSettlement.innerHTML = html || '<div style="text-align:center; color:#999;">Perfect! 帳務平衡</div>';
         modal.style.display = 'flex';
     }
 
@@ -450,7 +434,7 @@
         const paper = document.getElementById('receipt-paper');
         html2canvas(paper, { scale: 2 }).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'travel-settlement.png';
+            link.download = 'settlement.png';
             link.href = canvas.toDataURL();
             link.click();
         });
