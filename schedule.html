@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yona's Schedule Maker</title>
+<title>Yona's Schedule Maker V2</title>
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
     :root {
         --bg-color: #FDFCF8;
-        --card-bg: rgba(255, 255, 255, 0.85); /* 半透明白，讓底圖透出來 */
+        --card-bg: rgba(255, 255, 255, 0.90);
         --primary: #B09B88; /* 奶茶棕 */
         --text: #5A544F;
         --accent: #D4A373;
@@ -26,7 +26,7 @@
         min-height: 100vh;
     }
 
-    /* --- 控制區 (只有店主看得到) --- */
+    /* --- 控制區 --- */
     .controls {
         background: white;
         padding: 20px;
@@ -36,6 +36,32 @@
         max-width: 400px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        justify-content: center;
+    }
+
+    input[type="text"] {
+        padding: 8px;
+        border: 2px solid var(--primary);
+        border-radius: 8px;
+        width: 120px;
+        text-align: center;
+        color: var(--text);
+        font-weight: bold;
+    }
+
+    input[type="month"] {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
     }
 
     .btn {
@@ -47,20 +73,16 @@
         cursor: pointer;
         font-size: 14px;
         margin: 5px;
+        transition: 0.2s;
     }
+    .btn:active { transform: scale(0.95); }
     .btn.secondary { background: #999; }
-    
-    input[type="month"] {
-        padding: 8px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        margin-bottom: 10px;
-    }
+    .btn.clear { background: var(--accent); }
 
-    /* --- 畫布區 (最後會變成圖片的部分) --- */
+    /* --- 畫布區 --- */
     #capture-area {
-        width: 375px; /* 模擬手機寬度/IG限動寬度 */
-        height: 600px; /* 長方形比例 */
+        width: 375px;
+        height: 600px;
         background-color: var(--bg-color);
         background-size: cover;
         background-position: center;
@@ -73,15 +95,13 @@
         padding: 30px 20px;
     }
 
-    /* 半透明遮罩 (讓文字清楚) */
     .overlay {
         position: absolute;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(253, 252, 248, 0.85); /* 奶油色濾鏡 */
+        background: rgba(253, 252, 248, 0.88); /* 濾鏡稍微加深一點，讓文字更清楚 */
         z-index: 0;
     }
 
-    /* 內容容器 */
     .content-box {
         position: relative;
         z-index: 1;
@@ -103,7 +123,7 @@
     .month-title {
         font-size: 18px;
         color: var(--text);
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         font-weight: normal;
         border-bottom: 1px dashed var(--primary);
         padding-bottom: 5px;
@@ -115,9 +135,9 @@
     .calendar {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 8px;
+        gap: 6px; /* 間距稍微縮小 */
         width: 100%;
-        margin-bottom: auto; /* 推到上面 */
+        margin-bottom: auto;
     }
 
     .day-header {
@@ -129,55 +149,76 @@
     }
 
     .day-cell {
-        aspect-ratio: 1;
+        aspect-ratio: 1; /* 保持正方形 */
         display: flex;
+        flex-direction: column; /* 改成直向排列 */
         align-items: center;
         justify-content: center;
-        font-size: 14px;
-        color: var(--text);
         background: rgba(255,255,255,0.6);
-        border-radius: 50%; /* 圓形 */
+        border-radius: 12px; /* 改成圓角方形，比較好放時間 */
         cursor: pointer;
         transition: all 0.2s;
         border: 1px solid transparent;
         position: relative;
+        padding: 2px;
+    }
+
+    /* 日期數字 */
+    .date-num {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text);
+        line-height: 1;
+        margin-bottom: 2px;
+    }
+
+    /* 時間標籤 */
+    .time-tag {
+        font-size: 9px;
+        color: var(--primary);
+        font-weight: 700;
+        min-height: 12px; /* 佔位，避免沒字時跑版 */
+        text-align: center;
+        line-height: 1.1;
+        word-break: break-all;
     }
 
     /* 狀態樣式 */
-    .day-cell.full { /* 滿 */
-        background: #EBEBEB;
+    .day-cell.full .date-num {
         color: #BBB;
         text-decoration: line-through;
     }
+    .day-cell.full {
+        background: #F0F0F0;
+    }
     
-    .day-cell.off { /* 休 */
+    .day-cell.off {
         background: var(--primary);
+    }
+    .day-cell.off .date-num, .day-cell.off .time-tag {
         color: white;
     }
-    .day-cell.off::after {
+    .day-cell.off .time-tag::after {
         content: 'OFF';
-        font-size: 8px;
-        position: absolute;
-        bottom: 2px;
+        display: block;
     }
 
-    .day-cell.empty { /* 空白日期 (每個月前後多餘的) */
-        background: transparent;
-        cursor: default;
-    }
+    .day-cell.empty { background: transparent; cursor: default; }
 
     /* 底部說明 */
     .legend {
         display: flex;
-        gap: 15px;
-        font-size: 12px;
+        gap: 10px;
+        font-size: 11px;
         color: var(--text);
-        margin-top: 20px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
-    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
     
     .footer-text {
-        margin-top: 15px;
+        margin-top: 10px;
         font-size: 10px;
         color: var(--primary);
         letter-spacing: 2px;
@@ -188,22 +229,33 @@
 <body>
 
     <div class="controls">
-        <h3>📅 製作時刻表</h3>
-        <input type="month" id="monthPicker">
-        <br>
-        <label class="btn secondary">
+        <h3>📅 製作時刻表 2.0</h3>
+        
+        <div style="margin-bottom: 15px;">
+            <input type="month" id="monthPicker">
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="timeInput" placeholder="輸入時間 (如 14:00)">
+            <button class="btn clear" onclick="clearInput()">❌ 清空</button>
+        </div>
+
+        <p style="font-size: 12px; color: #888; margin: 5px 0 15px 0; line-height: 1.6;">
+            👉 <b>輸入框有字時：</b>點日期會填入時間<br>
+            👉 <b>輸入框空白時：</b>點日期切換 額滿/休假
+        </p>
+
+        <label class="btn secondary" style="display:block; margin-bottom:10px;">
             📷 上傳底圖
             <input type="file" id="bgInput" accept="image/*" style="display: none;">
         </label>
-        <button class="btn" onclick="downloadImage()">⬇️ 下載圖片</button>
-        <p style="font-size: 12px; color: #888; margin-top: 10px;">
-            點擊日期圓圈可切換狀態：<br>
-            ⚪️白色 = 可約 | 🟤棕色 = 休假 | 🔘灰色 = 已滿
-        </p>
+        <button class="btn" onclick="downloadImage()" style="width:100%;">⬇️ 下載圖片</button>
     </div>
 
     <div id="capture-area">
-        <div class="overlay"></div> <div class="content-box">
+        <div class="overlay"></div>
+        
+        <div class="content-box">
             <h1>Yona's nail studio</h1>
             <div class="month-title" id="displayMonth">September 2024</div>
 
@@ -215,14 +267,14 @@
                 <div class="day-header">THU</div>
                 <div class="day-header">FRI</div>
                 <div class="day-header">SAT</div>
-                
                 <div id="calendar-grid" style="display: contents;"></div>
             </div>
 
             <div class="legend">
-                <span><span class="dot" style="background:white; border:1px solid #ddd;"></span>可預約</span>
-                <span><span class="dot" style="background:#EBEBEB; text-decoration:line-through;"></span>額滿</span>
-                <span><span class="dot" style="background:var(--primary);"></span>公休</span>
+                <span><span class="dot" style="background:white; border:1px solid #ddd;"></span>空白:可約</span>
+                <span><span class="dot" style="background:var(--primary);"></span>棕色:休</span>
+                <span><span class="dot" style="background:#F0F0F0; border:1px solid #ddd;"></span>灰底:滿</span>
+                <span>📝文字:指定時間</span>
             </div>
 
             <div class="footer-text">RESERVATION ONLY</div>
@@ -235,72 +287,84 @@
     const calendarGrid = document.getElementById('calendar-grid');
     const bgInput = document.getElementById('bgInput');
     const captureArea = document.getElementById('capture-area');
+    const timeInput = document.getElementById('timeInput');
 
-    // 初始化：設定為當前月份
+    // 初始化
     const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    monthPicker.value = `${yyyy}-${mm}`;
+    monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     
-    // 監聽事件
     monthPicker.addEventListener('change', renderCalendar);
     bgInput.addEventListener('change', handleBgUpload);
-
-    // 第一次渲染
     renderCalendar();
+
+    function clearInput() {
+        timeInput.value = '';
+    }
 
     function renderCalendar() {
         const [year, month] = monthPicker.value.split('-').map(Number);
         
-        // 更新標題 (轉成英文月份)
+        // 更新標題
         const dateObj = new Date(year, month - 1);
-        const options = { year: 'numeric', month: 'long' }; // e.g. September 2024
-        displayMonth.textContent = dateObj.toLocaleDateString('en-US', options);
+        displayMonth.textContent = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 
-        // 清空格子
         calendarGrid.innerHTML = '';
 
-        // 計算該月第一天是星期幾
         const firstDay = new Date(year, month - 1, 1).getDay();
-        // 計算該月有幾天
         const daysInMonth = new Date(year, month, 0).getDate();
 
-        // 填補前面的空白格子
+        // 空白格
         for (let i = 0; i < firstDay; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'day-cell empty';
             calendarGrid.appendChild(emptyCell);
         }
 
-        // 產生日期
+        // 日期格
         for (let d = 1; d <= daysInMonth; d++) {
             const cell = document.createElement('div');
             cell.className = 'day-cell';
-            cell.textContent = d;
             
-            // 點擊切換狀態
-            cell.onclick = () => toggleStatus(cell);
+            // 結構改變：數字 + 時間標籤
+            cell.innerHTML = `
+                <span class="date-num">${d}</span>
+                <span class="time-tag"></span>
+            `;
             
+            cell.onclick = () => handleCellClick(cell);
             calendarGrid.appendChild(cell);
         }
     }
 
-    // 狀態切換邏輯 (正常 -> 滿 -> 休 -> 正常)
-    function toggleStatus(element) {
-        if (element.classList.contains('full')) {
-            // 如果是滿，變成休
-            element.classList.remove('full');
-            element.classList.add('off');
-        } else if (element.classList.contains('off')) {
-            // 如果是休，變回正常
-            element.classList.remove('off');
+    function handleCellClick(cell) {
+        const inputText = timeInput.value.trim();
+        const timeTag = cell.querySelector('.time-tag');
+
+        if (inputText !== '') {
+            // 模式A：寫入時間
+            // 如果原本是休假/滿，先清除狀態
+            cell.classList.remove('full', 'off');
+            // 寫入文字
+            timeTag.textContent = inputText;
         } else {
-            // 如果是正常，變成滿
-            element.classList.add('full');
+            // 模式B：切換狀態 (如果沒有輸入文字)
+            // 邏輯：有文字 -> 清除文字; 沒文字 -> 正常 -> 滿 -> 休 -> 正常
+            
+            if (timeTag.textContent !== '') {
+                timeTag.textContent = ''; // 先清除文字
+            } else {
+                if (cell.classList.contains('full')) {
+                    cell.classList.remove('full');
+                    cell.classList.add('off');
+                } else if (cell.classList.contains('off')) {
+                    cell.classList.remove('off');
+                } else {
+                    cell.classList.add('full');
+                }
+            }
         }
     }
 
-    // 處理背景圖片上傳
     function handleBgUpload(e) {
         const file = e.target.files[0];
         if (file) {
@@ -312,10 +376,9 @@
         }
     }
 
-    // 下載圖片 (使用 html2canvas)
     function downloadImage() {
         html2canvas(captureArea, {
-            scale: 2, // 提高解析度
+            scale: 2,
             backgroundColor: null
         }).then(canvas => {
             const link = document.createElement('a');
