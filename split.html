@@ -3,19 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yona's Splitter V2</title>
+<title>Yona's Couple Splitter</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
 <style>
     :root {
         --bg-color: #FDFCF8;
         --card-bg: #FFFFFF;
-        --primary: #B09B88;
+        --primary: #B09B88; /* 奶茶棕 (A的顏色) */
+        --secondary: #8DA399; /* 莫蘭迪綠 (B的顏色) */
         --text-main: #5A544F;
         --text-sub: #9C948B;
-        --accent: #D4A373;
-        --danger: #E08D8D;
         --radius: 16px;
-        --tag-bg: #F5F0EB;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -26,7 +24,7 @@
         color: var(--text-main);
         margin: 0;
         padding: 20px;
-        padding-bottom: 120px;
+        padding-bottom: 160px; /* 留給底部大區塊 */
         max-width: 600px;
         margin: 0 auto;
     }
@@ -37,14 +35,7 @@
         color: var(--primary);
         margin-bottom: 5px;
     }
-    .subtitle {
-        text-align: center;
-        font-size: 12px;
-        color: var(--text-sub);
-        margin-bottom: 20px;
-        letter-spacing: 1px;
-    }
-
+    
     .card {
         background: var(--card-bg);
         border-radius: var(--radius);
@@ -54,14 +45,59 @@
         border: 1px solid rgba(0,0,0,0.02);
     }
 
-    /* 輸入區塊樣式 */
-    .input-row {
+    /* 名字設定區 */
+    .names-row {
         display: flex;
         gap: 10px;
+        margin-bottom: 20px;
+    }
+    .name-input {
+        border: none;
+        background: transparent;
+        border-bottom: 2px solid #EEE;
+        text-align: center;
+        font-weight: bold;
+        color: var(--text-main);
+        padding: 5px;
+        width: 100%;
+        font-size: 16px;
+    }
+    .name-input:focus { outline: none; border-color: var(--primary); }
+    .name-input.b-side:focus { border-color: var(--secondary); }
+
+    /* 誰付錢的切換按鈕 */
+    .payer-toggle {
+        display: flex;
+        background: #F0F0F0;
+        border-radius: 12px;
+        padding: 4px;
         margin-bottom: 12px;
     }
-    
-    input, select {
+    .payer-option {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        color: #999;
+    }
+    /* 選中 A 的樣式 */
+    .payer-option.selected-a {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 2px 5px rgba(176, 155, 136, 0.4);
+    }
+    /* 選中 B 的樣式 */
+    .payer-option.selected-b {
+        background: var(--secondary);
+        color: white;
+        box-shadow: 0 2px 5px rgba(141, 163, 153, 0.4);
+    }
+
+    input {
         width: 100%;
         padding: 12px;
         border: 1px solid #EEE;
@@ -71,126 +107,59 @@
         color: var(--text-main);
         font-family: inherit;
         outline: none;
+        margin-bottom: 10px;
     }
     input:focus { border-color: var(--primary); background: #FFF; }
-
-    /* 特別設計：金額與人數的組合框 */
-    .price-split-group {
-        display: flex;
-        gap: 10px;
-    }
-    .price-input { flex: 2; }
-    .split-input-wrapper {
-        flex: 1;
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-    .split-input-wrapper::before {
-        content: '÷';
-        position: absolute;
-        left: 10px;
-        color: var(--primary);
-        font-weight: bold;
-    }
-    .split-input {
-        padding-left: 25px; /* 留位置給 ÷ 符號 */
-        text-align: center;
-        color: var(--primary);
-        font-weight: bold;
-    }
-    .split-label-suffix {
-        position: absolute;
-        right: 10px;
-        font-size: 12px;
-        color: #BBB;
-        pointer-events: none;
-    }
 
     .btn {
         width: 100%;
         padding: 12px;
         border: none;
         border-radius: 10px;
-        background: var(--primary);
+        background: #333; /* 黑色按鈕比較中性 */
         color: white;
         font-size: 16px;
         font-weight: bold;
         cursor: pointer;
         transition: 0.2s;
-        margin-top: 5px;
     }
     .btn:active { transform: scale(0.98); }
 
-    /* 清單樣式 */
+    /* 清單列表 */
     .expense-list { list-style: none; padding: 0; margin: 0; }
     
     .expense-item {
-        padding: 15px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
         border-bottom: 1px dashed #EEE;
         animation: fadeIn 0.3s ease;
     }
     
-    .item-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 6px;
+    .item-left { display: flex; align-items: center; gap: 10px; }
+    
+    /* 圓形頭像標示 */
+    .avatar {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: bold; color: white;
+        flex-shrink: 0;
     }
-    .item-name { font-weight: 700; color: var(--text-main); font-size: 16px; }
-    .item-date { font-size: 12px; color: #BBB; }
+    .avatar.a { background: var(--primary); }
+    .avatar.b { background: var(--secondary); }
 
-    .item-body {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #FAFAFA;
-        padding: 10px;
-        border-radius: 10px;
-    }
-
-    .total-badge {
-        font-size: 12px;
-        color: #999;
-        display: flex;
-        flex-direction: column;
-    }
-    .total-price {
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--text-main);
-        text-decoration: line-through; /* 刪除線效果，強調重點是分帳後 */
-        text-decoration-color: #DDD;
-        color: #BBB;
-    }
-
-    .split-badge {
-        text-align: right;
-    }
-    .split-price {
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--accent);
-    }
-    .split-info {
-        font-size: 11px;
-        color: var(--primary);
-        background: var(--tag-bg);
-        padding: 2px 8px;
-        border-radius: 10px;
-        display: inline-block;
-    }
+    .item-details { display: flex; flex-direction: column; }
+    .item-name { font-weight: 600; font-size: 15px; }
+    .item-date { font-size: 11px; color: #BBB; }
+    .item-price { font-weight: 700; font-size: 16px; color: var(--text-main); }
 
     .btn-del {
-        background: transparent;
-        border: none;
-        color: #DDD;
-        font-size: 18px;
-        margin-left: 10px;
-        cursor: pointer;
+        background: none; border: none; color: #EEE; font-size: 16px; padding: 5px; cursor: pointer;
     }
 
-    /* 底部總計 */
+    /* 底部結算區 */
     .sticky-footer {
         position: fixed;
         bottom: 0; left: 0; right: 0;
@@ -201,14 +170,30 @@
         box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
         z-index: 100;
         border-radius: 20px 20px 0 0;
-        max-width: 600px;
-        margin: 0 auto;
+        max-width: 600px; margin: 0 auto;
+    }
+
+    .summary-row {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        font-size: 12px;
+        color: var(--text-sub);
+        margin-bottom: 5px;
     }
-    .footer-label { font-size: 12px; color: #999; letter-spacing: 1px; }
-    .footer-total { font-size: 24px; font-weight: 700; color: var(--text-main); }
+    
+    .result-box {
+        background: #333;
+        color: white;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+        margin-top: 10px;
+        position: relative;
+        overflow: hidden;
+    }
+    .result-text { font-size: 14px; opacity: 0.8; margin-bottom: 4px; }
+    .result-amount { font-size: 24px; font-weight: 700; color: #FFD700; }
+    .result-note { font-size: 10px; opacity: 0.6; margin-top: 4px; }
 
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(5px); }
@@ -218,151 +203,190 @@
 </head>
 <body>
 
-    <h1>Travel Splitter</h1>
-    <div class="subtitle">Detailed Expense Tracker</div>
-
-    <div class="card">
-        <div class="input-row">
-            <input type="date" id="dateInput">
-            <input type="time" id="timeInput">
-        </div>
-        <div class="input-row">
-            <input type="text" id="nameInput" placeholder="消費項目 (例如: 午餐)">
-        </div>
-        
-        <div class="price-split-group">
-            <input type="number" id="priceInput" class="price-input" placeholder="總金額 $" inputmode="numeric">
-            
-            <div class="split-input-wrapper">
-                <input type="number" id="splitInput" class="split-input" value="1" min="1" inputmode="numeric">
-                <span class="split-label-suffix">人分</span>
-            </div>
-        </div>
-
-        <button class="btn" onclick="addItem()">＋ 加入清單</button>
+    <h1>Couple Splitter</h1>
+    
+    <div class="names-row">
+        <input type="text" id="nameA" class="name-input" value="A" placeholder="名字 A" oninput="updateLabels()">
+        <input type="text" id="nameB" class="name-input b-side" value="B" placeholder="名字 B" oninput="updateLabels()">
     </div>
 
     <div class="card">
-        <h3 style="margin:0 0 15px 0; font-size:12px; color:var(--text-sub); letter-spacing:1px;">EXPENSE DETAILS</h3>
+        <div class="payer-toggle">
+            <div id="btnA" class="payer-option selected-a" onclick="setPayer('A')">A 付款</div>
+            <div id="btnB" class="payer-option" onclick="setPayer('B')">B 付款</div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <input type="date" id="dateInput">
+            <input type="text" id="itemName" placeholder="項目 (如: 午餐)">
+        </div>
+        
+        <input type="number" id="priceInput" placeholder="金額 $" inputmode="numeric">
+        
+        <button class="btn" onclick="addExpense()">＋ 記一筆</button>
+    </div>
+
+    <div class="card">
         <ul class="expense-list" id="list">
-            <li style="text-align:center; padding:20px; color:#ddd; font-size:14px;">尚未新增消費</li>
-        </ul>
+            </ul>
     </div>
 
     <div class="sticky-footer">
-        <div>
-            <div class="footer-label">TRIP TOTAL</div>
-            <div style="font-size:10px; color:#ccc;">(累計總消費)</div>
+        <div class="summary-row">
+            <span id="labelTotalA">A 共付: $0</span>
+            <span id="labelTotalB">B 共付: $0</span>
         </div>
-        <div class="footer-total" id="grandTotal">$0</div>
+        <div class="summary-row" style="border-bottom: 1px solid #eee; padding-bottom: 8px;">
+            <span>Trip Total:</span>
+            <span id="tripTotal" style="color:#333; font-weight:bold;">$0</span>
+        </div>
+
+        <div class="result-box">
+            <div class="result-text" id="resultDesc">暫無帳務</div>
+            <div class="result-amount" id="resultAmount">$0</div>
+            <div class="result-note">結算方式：(多付的 - 少付的) ÷ 2</div>
+        </div>
     </div>
 
 <script>
+    const nameAInput = document.getElementById('nameA');
+    const nameBInput = document.getElementById('nameB');
     const dateInput = document.getElementById('dateInput');
-    const timeInput = document.getElementById('timeInput');
-    const nameInput = document.getElementById('nameInput');
+    const itemName = document.getElementById('itemName');
     const priceInput = document.getElementById('priceInput');
-    const splitInput = document.getElementById('splitInput');
     const listEl = document.getElementById('list');
-    const grandTotalEl = document.getElementById('grandTotal');
-    
+
+    let currentPayer = 'A'; // 預設 A
     let expenses = [];
 
-    // 設定現在時間
-    function setNow() {
-        const now = new Date();
-        dateInput.value = now.toISOString().split('T')[0];
-        timeInput.value = now.toTimeString().slice(0, 5);
-    }
-    setNow();
+    // 初始化日期
+    dateInput.value = new Date().toISOString().split('T')[0];
 
-    function addItem() {
-        const name = nameInput.value.trim();
-        const price = parseInt(priceInput.value);
-        const split = parseInt(splitInput.value);
+    // 更新介面上的名字
+    function updateLabels() {
+        const nameA = nameAInput.value || 'A';
+        const nameB = nameBInput.value || 'B';
         
-        if (!name || isNaN(price) || isNaN(split) || split < 1) {
-            alert('請輸入正確的品項、金額與人數喔！');
-            return;
+        document.getElementById('btnA').textContent = nameA + ' 付款';
+        document.getElementById('btnB').textContent = nameB + ' 付款';
+        
+        // 重新渲染列表以更新名字
+        if(expenses.length > 0) render(); 
+    }
+
+    function setPayer(who) {
+        currentPayer = who;
+        // 切換樣式
+        if (who === 'A') {
+            document.getElementById('btnA').classList.add('selected-a');
+            document.getElementById('btnB').classList.remove('selected-b');
+        } else {
+            document.getElementById('btnA').classList.remove('selected-a');
+            document.getElementById('btnB').classList.add('selected-b');
         }
+    }
+
+    function addExpense() {
+        const name = itemName.value.trim();
+        const price = parseInt(priceInput.value);
+        if (!name || isNaN(price)) { alert('請輸入項目和金額'); return; }
 
         expenses.push({
             id: Date.now(),
             date: dateInput.value,
-            time: timeInput.value,
-            name: name,
+            item: name,
             price: price,
-            split: split // 紀錄這筆是幾個人分的
+            payer: currentPayer // 記住是誰付的
         });
 
-        // 清空輸入 (人數預設保留為上一次的設定，比較方便)
-        nameInput.value = '';
+        itemName.value = '';
         priceInput.value = '';
-        nameInput.focus();
-
+        itemName.focus();
+        
         render();
     }
 
     function deleteItem(id) {
-        if(confirm('確定要刪除這筆款項嗎？')) {
-            expenses = expenses.filter(item => item.id !== id);
+        if(confirm('刪除此筆？')) {
+            expenses = expenses.filter(e => e.id !== id);
             render();
         }
     }
 
     function render() {
         listEl.innerHTML = '';
-        let grandTotal = 0;
+        let totalA = 0;
+        let totalB = 0;
 
-        // 排序：新的在上面
+        const nameA = nameAInput.value || 'A';
+        const nameB = nameBInput.value || 'B';
+
+        // 排序：新到舊
         expenses.sort((a, b) => b.id - a.id);
 
-        if (expenses.length === 0) {
-            listEl.innerHTML = '<li style="text-align:center; padding:20px; color:#ddd; font-size:14px;">尚未新增消費</li>';
-        }
+        expenses.forEach(e => {
+            if (e.payer === 'A') totalA += e.price;
+            else totalB += e.price;
 
-        expenses.forEach(item => {
-            grandTotal += item.price;
+            // 日期顯示 mm/dd
+            const d = new Date(e.date);
+            const dStr = `${d.getMonth()+1}/${d.getDate()}`;
             
-            // 計算每人多少
-            const perPerson = Math.ceil(item.price / item.split);
-
-            // 格式化日期
-            const dateObj = new Date(item.date);
-            const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()}`;
+            // 決定頭像顏色跟字
+            const avatarClass = e.payer === 'A' ? 'avatar a' : 'avatar b';
+            const avatarText = e.payer === 'A' ? nameA.charAt(0) : nameB.charAt(0);
 
             const li = document.createElement('li');
             li.className = 'expense-item';
-            
-            // HTML 結構：上面是品名日期，下面是灰底的金額區塊
             li.innerHTML = `
-                <div class="item-header">
-                    <span class="item-name">${item.name}</span>
-                    <div style="display:flex; align-items:center;">
-                        <span class="item-date">${dateStr} ${item.time}</span>
-                        <button class="btn-del" onclick="deleteItem(${item.id})">🗑️</button>
+                <div class="item-left">
+                    <div class="${avatarClass}">${avatarText}</div>
+                    <div class="item-details">
+                        <span class="item-name">${e.item}</span>
+                        <span class="item-date">${dStr}</span>
                     </div>
                 </div>
-                
-                <div class="item-body">
-                    <div class="total-badge">
-                        <span>總金額</span>
-                        <span class="total-price">$${item.price.toLocaleString()}</span>
-                    </div>
-                    
-                    <div class="item-arrow" style="color:#ddd;">➔</div>
-
-                    <div class="split-badge">
-                        <div class="split-info">${item.split} 人分</div>
-                        <div class="split-price">$${perPerson.toLocaleString()} <span style="font-size:10px; color:#aaa;">/人</span></div>
-                    </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="item-price" style="color:${e.payer==='A'?'var(--primary)':'var(--secondary)'}">
+                        $${e.price.toLocaleString()}
+                    </span>
+                    <button class="btn-del" onclick="deleteItem(${e.id})">×</button>
                 </div>
             `;
             listEl.appendChild(li);
         });
 
-        // 更新底部總累計
-        grandTotalEl.textContent = '$' + grandTotal.toLocaleString();
+        calculateResult(totalA, totalB, nameA, nameB);
+    }
+
+    function calculateResult(totalA, totalB, nameA, nameB) {
+        // 更新文字
+        document.getElementById('labelTotalA').textContent = `${nameA} 共付: $${totalA.toLocaleString()}`;
+        document.getElementById('labelTotalB').textContent = `${nameB} 共付: $${totalB.toLocaleString()}`;
+        document.getElementById('tripTotal').textContent = `$${(totalA + totalB).toLocaleString()}`;
+
+        // 核心邏輯：多退少補
+        // 兩人應該平均分攤的金額 = 總花費 / 2
+        // 誰付的錢 > 平均值，那個人就該收錢
+        
+        const diff = totalA - totalB; 
+        const settlement = Math.abs(diff) / 2;
+        
+        const resultDesc = document.getElementById('resultDesc');
+        const resultAmount = document.getElementById('resultAmount');
+
+        if (settlement === 0) {
+            resultDesc.textContent = "完美！兩人剛好持平";
+            resultAmount.textContent = "$0";
+        } else if (diff > 0) {
+            // A 付比較多，B 要給 A
+            resultDesc.textContent = `${nameB} ➔ 要給 ➔ ${nameA}`;
+            resultAmount.textContent = `$${Math.ceil(settlement).toLocaleString()}`;
+        } else {
+            // B 付比較多，A 要給 B
+            resultDesc.textContent = `${nameA} ➔ 要給 ➔ ${nameB}`;
+            resultAmount.textContent = `$${Math.ceil(settlement).toLocaleString()}`;
+        }
     }
 </script>
 
