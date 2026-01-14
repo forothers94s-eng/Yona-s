@@ -1,10 +1,201 @@
-.date-main {
-        font-size: 24px; /* 字可以大一點才美 */
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yona's Schedule V5</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<style>
+    :root {
+        --bg-color: #FDFCF8;
+        --card-bg: rgba(255, 255, 255, 0.90);
+        --primary: #B09B88; /* 奶茶棕 */
+        --text: #5A544F;
+        --accent: #D4A373;
+        --radius: 16px;
+    }
+
+    body {
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        background: #eee;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    /* --- 控制區 --- */
+    .controls {
+        background: white;
+        padding: 20px;
+        border-radius: var(--radius);
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        text-align: center;
+        position: sticky; /* 讓控制區吸在頂部 */
+        top: 0;
+        z-index: 100;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .input-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+
+    input[type="date"] {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        flex: 1;
+        font-family: inherit;
+    }
+
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid var(--primary);
+        border-radius: 12px;
+        font-size: 14px;
+        color: var(--text);
+        resize: none;
+        background: #FAFAFA;
+        font-family: inherit;
+        margin-bottom: 10px;
+    }
+    textarea:focus { outline: none; background: #FFF; }
+    
+    /* 專門給備註用的輸入框樣式 */
+    .note-input {
+        height: 80px;
+        border-color: #ddd; /* 顏色淡一點區分 */
+        font-size: 13px;
+    }
+
+    .btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.2s;
+        flex: 1;
+    }
+    .btn:active { transform: scale(0.95); }
+    .btn.secondary { background: #999; }
+    .btn.add { background: var(--accent); font-weight: bold; }
+    .btn-delete-item {
+        background: transparent;
+        color: #999;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 0 5px;
+    }
+
+    /* --- 預覽畫布 --- */
+    #capture-area {
+        width: 375px;
+        min-height: 600px;
+        background-color: var(--bg-color);
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 25px;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(253, 252, 248, 0.88);
+        z-index: 0;
+    }
+
+    .content-box {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1; /* 讓它撐開高度 */
+    }
+
+    h1 {
+        font-family: serif;
+        color: var(--primary);
+        font-size: 28px;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+    }
+    
+    .subtitle {
+        font-size: 12px;
+        color: var(--text);
+        letter-spacing: 2px;
+        margin-bottom: 25px;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--primary);
+        padding-bottom: 5px;
+    }
+
+    /* 清單容器 */
+    .schedule-list {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    /* 單個日期項目 */
+    .schedule-item {
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        padding: 12px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 4px solid var(--primary);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+    .item-date {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        min-width: 80px;
+    }
+    
+    .date-main {
+        font-size: 24px; /* 優雅風大字體 */
         font-weight: 600;
         color: var(--primary);
-        font-family: 'Cormorant Garamond', serif; /* 套用新字體 */
-        font-style: italic; /* 這款字體斜體特別美，不喜歡可拿掉這行 */
+        font-family: 'Cormorant Garamond', serif; /* 優雅字體 */
+        font-style: italic;
     }
+    .date-week {
+        font-size: 11px;
+        color: #999;
+        text-transform: uppercase;
+        margin-top: 2px;
+    }
+
     .item-times {
         font-size: 15px;
         color: var(--text);
@@ -12,5 +203,74 @@
         line-height: 1.5;
         font-weight: 600;
         white-space: pre-line;
-        font-family: 'Cormorant Garamond', serif; /* 套用新字體 */
+        font-family: 'Cormorant Garamond', serif; /* 優雅字體 */
     }
+
+    /* --- 新增的備註區塊樣式 --- */
+    .note-box {
+        width: 100%;
+        margin-top: auto; /* 推到底部 */
+        padding: 20px 10px;
+        border-top: 1px dashed var(--primary); /* 分隔線 */
+        font-size: 13px;
+        color: var(--text);
+        text-align: center;
+        line-height: 1.6;
+        white-space: pre-line; /* 讓備註可以換行 */
+        display: none; /* 預設隱藏，有字才出現 */
+    }
+    
+    /* 備註的小標題 */
+    .note-box::before {
+        content: 'NOTES';
+        display: block;
+        font-size: 10px;
+        color: var(--accent);
+        letter-spacing: 2px;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .footer-text {
+        margin-top: 20px;
+        font-size: 10px;
+        color: var(--primary);
+        letter-spacing: 2px;
+        text-align: center;
+    }
+    
+    /* 刪除模式列表 */
+    .controls-list {
+        margin-top: 20px;
+        text-align: left;
+        max-height: 150px;
+        overflow-y: auto;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+    .control-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        padding: 5px 0;
+        border-bottom: 1px dashed #eee;
+    }
+
+</style>
+</head>
+<body>
+
+    <div class="controls">
+        <h3 style="margin:0 0 15px 0;">📅 預約時段清單</h3>
+        
+        <div class="input-row">
+            <input type="date" id="dateInput">
+        </div>
+        
+        <textarea id="timeInput" style="height: 60px;" placeholder="1. 輸入時段 (如：13:00、15:00)"></textarea>
+
+        <button class="btn add" onclick="addItem()">＋ 新增日期</button>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--
