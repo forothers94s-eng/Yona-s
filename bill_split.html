@@ -214,8 +214,8 @@
     <div id="reportSection" style="display:none;">
         <div class="result-box" id="resultCaptureTarget">
             <h2 style="text-align: center;">📊 結算結果 (TWD)</h2>
-            <div style="display: flex; justify-content: space-around; margin-bottom: 15px; font-weight: bold; color: #8D7B68;">
-                <span>總支出: $<span id="totalDisplay">0</span></span>
+            <div style="text-align:center; margin-bottom: 15px; color: #8D7B68;">
+                <div style="font-weight: bold; font-size:18px;">總支出: $<span id="totalDisplay">0</span></div>
             </div>
 
             <h3 style="font-size: 16px;">💸 轉帳建議 (台幣)</h3>
@@ -228,7 +228,7 @@
                         <th>姓名</th>
                         <th>先付了</th>
                         <th>應分攤</th>
-                        <th>淨額</th>
+                        <th>淨額 (台幣)</th>
                     </tr>
                 </thead>
                 <tbody id="balanceTableBody"></tbody>
@@ -244,26 +244,19 @@
     let people = []; 
     let expenses = []; 
 
-    // --- 初始化：讀取舊資料 ---
-    window.onload = function() {
-        loadData();
-    };
+    // --- 初始化 ---
+    window.onload = function() { loadData(); };
 
-    // 儲存資料到 LocalStorage
     function saveData() {
         const currencyName = document.getElementById('currencyName').value;
         const exchangeRate = document.getElementById('exchangeRate').value;
-        
         localStorage.setItem('yona_people', JSON.stringify(people));
         localStorage.setItem('yona_expenses', JSON.stringify(expenses));
         localStorage.setItem('yona_currencyName', currencyName);
         localStorage.setItem('yona_exchangeRate', exchangeRate);
-
-        // 更新外幣標籤顯示
         document.getElementById('labelCurrencyName').innerText = currencyName || '外幣';
     }
 
-    // 讀取資料
     function loadData() {
         const storedPeople = localStorage.getItem('yona_people');
         const storedExpenses = localStorage.getItem('yona_expenses');
@@ -272,35 +265,28 @@
 
         if (storedPeople) people = JSON.parse(storedPeople);
         if (storedExpenses) expenses = JSON.parse(storedExpenses);
-        
         if (storedCurrency) {
             document.getElementById('currencyName').value = storedCurrency;
             document.getElementById('labelCurrencyName').innerText = storedCurrency;
         }
         if (storedRate) document.getElementById('exchangeRate').value = storedRate;
 
-        // 恢復介面
         updatePersonUI();
         renderExpenses();
     }
 
-    // 清除所有資料
     function clearAllData() {
         if (confirm('確定要清除所有紀錄嗎？(人員和帳務都會消失喔)')) {
             localStorage.clear();
             people = [];
             expenses = [];
-            // 重整頁面最快
             location.reload(); 
         }
     }
 
-    // --- 以下為原有功能 (已加入 saveData) ---
-
-    // 監聽匯率名稱變更
     document.getElementById('currencyName').addEventListener('input', function(e) {
         document.getElementById('labelCurrencyName').innerText = e.target.value || '外幣';
-        saveData(); // 儲存
+        saveData();
     });
 
     function addPerson() {
@@ -310,7 +296,7 @@
             people.push(name);
             updatePersonUI();
             nameInput.value = '';
-            saveData(); // 儲存
+            saveData();
         } else if (people.includes(name)) {
             alert('這個名字已經有囉！');
         }
@@ -323,9 +309,6 @@
         select.innerHTML = `<option value="" disabled selected>誰先付?</option>` + 
                            people.map(p => `<option value="${p}">${p}</option>`).join('');
         if (people.includes(currentVal)) select.value = currentVal;
-        
-        // 為了避免影響正在輸入的 checkbox，我們只在初始化或新增人員時重繪比較好
-        // 但為了簡單起見，這裡還是會重繪，使用者新增人員時要留意
         renderCheckboxes(); 
     }
 
@@ -335,9 +318,6 @@
             container.innerHTML = '<span style="color:#ccc; font-size:12px;">請先新增人員...</span>';
             return;
         }
-        // 讀取時，這裡預設 checked=true，可能導致操作中的狀態重置，
-        // 但因為是簡單應用，且通常是新增人員後才輸入消費，故影響不大。
-        // 若要保留勾選狀態需更複雜邏輯，此處保持 "新增人員後重置為全選"。
         container.innerHTML = people.map(p => `
             <label class="checkbox-label">
                 <input type="checkbox" name="involved" value="${p}" checked> ${p}
@@ -352,7 +332,6 @@
         const isForeign = document.getElementById('isForeignCurrency').checked;
         const rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
         const currencyName = document.getElementById('currencyName').value || '外幣';
-
         const checkboxes = document.querySelectorAll('input[name="involved"]:checked');
         const involved = Array.from(checkboxes).map(cb => cb.value);
 
@@ -366,9 +345,8 @@
         });
         
         renderExpenses();
-        saveData(); // 儲存
+        saveData(); 
 
-        // 清空輸入
         document.getElementById('itemName').value = '';
         document.getElementById('itemCost').value = '';
         document.querySelectorAll('input[name="involved"]').forEach(cb => cb.checked = true);
@@ -397,7 +375,7 @@
     function removeExpense(index) {
         expenses.splice(index, 1);
         renderExpenses();
-        saveData(); // 儲存
+        saveData(); 
     }
 
     function calculate() {
@@ -423,21 +401,39 @@
             balances.push({ name: p, paid: paidMap[p], shouldPay: shouldPayMap[p], balance: balance });
         });
 
+        // 顯示介面
         document.getElementById('reportSection').style.display = 'block';
-        document.getElementById('totalDisplay').innerText = total;
+        
+        // --- 顯示總金額 (含外幣) ---
+        const rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
+        const currencyName = document.getElementById('currencyName').value || '外幣';
+        const totalForeign = total / rate;
 
+        document.getElementById('totalDisplay').innerHTML = `
+            ${Math.round(total)} <span style="font-size:14px; font-weight:normal; color:#999;">(約 ${currencyName} ${Math.round(totalForeign)})</span>
+        `;
+
+        // --- 顯示表格 (含外幣) ---
         const balanceTbody = document.getElementById('balanceTableBody');
-        balanceTbody.innerHTML = balances.map(b => `
+        balanceTbody.innerHTML = balances.map(b => {
+            // 計算外幣估算值
+            const balanceForeign = Math.round(b.balance / rate);
+            const foreignText = `(約 ${currencyName} ${balanceForeign > 0 ? '+' : ''}${balanceForeign})`;
+
+            return `
             <tr>
                 <td>${b.name}</td>
                 <td>${Math.round(b.paid)}</td>
                 <td>${Math.round(b.shouldPay)}</td>
                 <td style="color:${b.balance >= 0 ? '#6B8E23' : '#E74C3c'}; font-weight:bold;">
                     ${b.balance >= 0 ? `+${Math.round(b.balance)}` : `${Math.round(b.balance)}`}
+                    <span class="sub-text" style="font-weight:normal;">${foreignText}</span>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
 
+        // --- 轉帳建議 (保持台幣) ---
         let debtors = balances.filter(b => b.balance < -0.5).sort((a, b) => a.balance - b.balance);
         let creditors = balances.filter(b => b.balance > 0.5).sort((a, b) => b.balance - a.balance);
         let transactions = [];
@@ -465,8 +461,6 @@
         } else {
             transferList.innerHTML = `<div style="text-align:center; padding:10px;">🎉 帳目已平，無需轉帳</div>`;
         }
-        
-        // 這裡不需要 saveData，因為計算結果是動態生成的，不是輸入資料
     }
 
     function downloadImage() {
