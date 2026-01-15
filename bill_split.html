@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YONA的結算計算機</title>
+    <title>YONA的結算計算機 (無條件進位版)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;500&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
     
@@ -190,7 +190,7 @@
     <button class="reset-btn-top" onclick="clearAllData()">🗑️ 重來</button>
 
     <h1>✈️ YONA的匯率結算機</h1>
-    <p style="text-align: center; font-size: 14px; color: #999;">✨ 關掉視窗也能自動存檔 ✨</p>
+    <p style="text-align: center; font-size: 14px; color: #999;">✨ 關掉視窗也能自動存檔 (無條件進位版) ✨</p>
 
     <div class="rate-settings">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -379,7 +379,8 @@
         if (!item || isNaN(inputCost) || !payer) { alert('請填寫完整：項目、金額、付款人'); return; }
         if (involved.length === 0) { alert('至少要有一個人分攤這筆費用喔！'); return; }
 
-        let finalCostTWD = isForeign ? Math.round(inputCost * rate) : inputCost;
+        // 修改點 1: 新增消費時，外幣換算直接使用 Math.ceil 無條件進位
+        let finalCostTWD = isForeign ? Math.ceil(inputCost * rate) : inputCost;
 
         expenses.push({ 
             item, inputCost, cost: finalCostTWD, payer, involved, isForeign, currencyName
@@ -445,37 +446,51 @@
             });
         });
 
+        // 為了讓表格顯示一致，我們在計算結算表時，對「已付」和「應付」做進位處理
         let balances = [];
         people.forEach(p => {
-            let balance = paidMap[p] - shouldPayMap[p];
-            balances.push({ name: p, paid: paidMap[p], shouldPay: shouldPayMap[p], balance: balance });
+            let displayPaid = Math.ceil(paidMap[p]);
+            let displayShouldPay = Math.ceil(shouldPayMap[p]);
+            // 淨額 = 顯示的已付 - 顯示的應付 (這樣表格數字加減才對得起來)
+            let balance = displayPaid - displayShouldPay;
+            
+            // 保留原始數值給轉帳邏輯用，但顯示時用上面的 balance
+            let rawBalance = paidMap[p] - shouldPayMap[p]; 
+            
+            balances.push({ 
+                name: p, 
+                paid: displayPaid, 
+                shouldPay: displayShouldPay, 
+                balance: balance,
+                rawBalance: rawBalance 
+            });
         });
 
         // 顯示介面
         document.getElementById('reportSection').style.display = 'block';
         
-        // --- 顯示總金額 (含外幣) ---
+        // --- 顯示總金額 (含外幣) (修改點 2: Math.ceil) ---
         const rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
         const currencyName = document.getElementById('currencyName').value || '外幣';
         const totalForeign = total / rate;
 
         document.getElementById('totalDisplay').innerHTML = `
-            ${Math.round(total)} <span style="font-size:14px; font-weight:normal; color:#999;">(約 ${currencyName} ${Math.round(totalForeign)})</span>
+            ${Math.ceil(total)} <span style="font-size:14px; font-weight:normal; color:#999;">(約 ${currencyName} ${Math.ceil(totalForeign)})</span>
         `;
 
         // --- 顯示表格 (含外幣) ---
         const balanceTbody = document.getElementById('balanceTableBody');
         balanceTbody.innerHTML = balances.map(b => {
-            const balanceForeign = Math.round(b.balance / rate);
+            const balanceForeign = Math.round(b.rawBalance / rate);
             const foreignText = `(約 ${currencyName} ${balanceForeign > 0 ? '+' : ''}${balanceForeign})`;
 
             return `
             <tr>
                 <td>${b.name}</td>
-                <td>${Math.round(b.paid)}</td>
-                <td>${Math.round(b.shouldPay)}</td>
+                <td>${b.paid}</td>
+                <td>${b.shouldPay}</td>
                 <td style="color:${b.balance >= 0 ? '#6B8E23' : '#E74C3c'}; font-weight:bold;">
-                    ${b.balance >= 0 ? `+${Math.round(b.balance)}` : `${Math.round(b.balance)}`}
+                    ${b.balance >= 0 ? `+${b.balance}` : `${b.balance}`}
                     <span class="sub-text" style="font-weight:normal;">${foreignText}</span>
                 </td>
             </tr>
@@ -483,20 +498,27 @@
         }).join('');
 
         // --- 轉帳建議 (保持台幣) ---
-        let debtors = balances.filter(b => b.balance < -0.5).sort((a, b) => a.balance - b.balance);
-        let creditors = balances.filter(b => b.balance > 0.5).sort((a, b) => b.balance - a.balance);
+        // 為了公平，轉帳計算還是使用精確的小數點，但「顯示建議金額」時無條件進位
+        let debtors = balances.filter(b => b.rawBalance < -0.5).sort((a, b) => a.rawBalance - b.rawBalance);
+        let creditors = balances.filter(b => b.rawBalance > 0.5).sort((a, b) => b.rawBalance - a.rawBalance);
         let transactions = [];
         let i = 0; let j = 0;
 
         while (i < debtors.length && j < creditors.length) {
             let debtor = debtors[i];
             let creditor = creditors[j];
-            let amount = Math.min(Math.abs(debtor.balance), creditor.balance);
             
+            // 使用原始 rawBalance 來計算誰欠誰，避免因進位造成的誤差導致無法歸零
+            let amount = Math.min(Math.abs(debtor.rawBalance), creditor.rawBalance);
+            
+            // 修改點 3: 這裡在 push 進去時，amount 還是精確值，但在顯示時我們用 Math.ceil
             transactions.push({ from: debtor.name, to: creditor.name, amount: amount });
-            debtor.balance += amount; creditor.balance -= amount;
-            if (Math.abs(debtor.balance) < 0.5) i++;
-            if (creditor.balance < 0.5) j++;
+            
+            debtor.rawBalance += amount; 
+            creditor.rawBalance -= amount;
+            
+            if (Math.abs(debtor.rawBalance) < 0.5) i++;
+            if (creditor.rawBalance < 0.5) j++;
         }
 
         const transferList = document.getElementById('transferList');
@@ -504,7 +526,7 @@
             transferList.innerHTML = transactions.map(t => `
                 <div class="transfer-item">
                     <span>${t.from} <span style="font-size:12px; color:#999;">給</span> ${t.to}</span>
-                    <span class="amount-highlight">$${Math.round(t.amount)}</span>
+                    <span class="amount-highlight">$${Math.ceil(t.amount)}</span>
                 </div>
             `).join('');
         } else {
