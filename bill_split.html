@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>團體旅遊/聚餐 分帳結算報告</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; background-color: #f4f4f9; color: #333; padding: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #2c3e50; }
+        .section { margin-bottom: 30px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+        .input-group { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
+        input, select, button { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        input[type="number"] { width: 100px; }
+        button { cursor: pointer; background-color: #3498db; color: white; border: none; transition: 0.3s; }
+        button:hover { background-color: #2980b9; }
+        button.delete-btn { background-color: #e74c3c; padding: 5px 10px; font-size: 14px; }
+        button.delete-btn:hover { background-color: #c0392b; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; font-weight: bold; }
+        
+        .result-box { background-color: #e8f6f3; border-left: 5px solid #1abc9c; padding: 15px; margin-top: 20px; }
+        .transfer-list { list-style: none; padding: 0; }
+        .transfer-list li { background: #fff; margin: 5px 0; padding: 10px; border-radius: 5px; border-left: 5px solid #e67e22; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        .summary-highlight { font-weight: bold; color: #e74c3c; }
+        .tag { display: inline-block; background: #eee; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 5px;}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📝 團體分帳結算報告</h1>
+
+    <div class="section">
+        <h3>1. 參與人員 (請先設定)</h3>
+        <div class="input-group">
+            <input type="text" id="newPersonName" placeholder="輸入名字 (如: A, B...)">
+            <button onclick="addPerson()">新增人員</button>
+        </div>
+        <div id="personList" style="margin-top: 10px;">
+            </div>
+    </div>
+
+    <div class="section">
+        <h3>2. 新增消費明細</h3>
+        <div class="input-group">
+            <input type="text" id="itemName" placeholder="消費項目 (如: 晚餐)" style="flex: 2;">
+            <input type="number" id="itemCost" placeholder="金額" style="flex: 1;">
+            <select id="payerSelect" style="flex: 1;">
+                <option value="" disabled selected>誰付款?</option>
+            </select>
+            <button onclick="addExpense()">加入明細</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>付款人</th>
+                    <th>金額</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="expenseTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <div style="text-align: center;">
+        <button onclick="calculate()" style="width: 100%; padding: 15px; font-size: 18px; background-color: #27ae60;">📊 產生結算報告</button>
+    </div>
+
+    <div id="reportSection" class="section" style="display:none; margin-top: 20px;">
+        <h2>結算結果</h2>
+        
+        <p><strong>總消費金額：</strong> <span id="totalDisplay">0</span> 元</p>
+        <p><strong>總人數：</strong> <span id="countDisplay">0</span> 人</p>
+        <p><strong>平均每人應分攤：</strong> <span id="averageDisplay" class="summary-highlight">0</span> 元</p>
+
+        <h3>💰 最終轉帳建議 (誰該給誰多少錢)</h3>
+        <ul id="transferList" class="transfer-list">
+            </ul>
+
+        <h3>📉 個人收支詳情</h3>
+        <table id="balanceTable">
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>實際已付</th>
+                    <th>應付份額</th>
+                    <th>淨額 (多付/少付)</th>
+                </tr>
+            </thead>
+            <tbody id="balanceTableBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let people = []; // 儲存人名
+    let expenses = []; // 儲存消費紀錄 {item, cost, payer}
+
+    // 新增人員
+    function addPerson() {
+        const nameInput = document.getElementById('newPersonName');
+        const name = nameInput.value.trim();
+        if (name && !people.includes(name)) {
+            people.push(name);
+            updatePersonUI();
+            nameInput.value = '';
+        } else if (people.includes(name)) {
+            alert('這個名字已經存在囉！');
+        }
+    }
+
+    // 更新人員顯示與下拉選單
+    function updatePersonUI() {
+        const list = document.getElementById('personList');
+        const select = document.getElementById('payerSelect');
+        
+        list.innerHTML = people.map(p => `<span class="tag">${p}</span>`).join('');
+        
+        // 保存當前選中的值
+        const currentVal = select.value;
+        select.innerHTML = `<option value="" disabled selected>誰付款?</option>` + 
+                           people.map(p => `<option value="${p}">${p}</option>`).join('');
+        if (people.includes(currentVal)) select.value = currentVal;
+    }
+
+    // 新增消費
+    function addExpense() {
+        const item = document.getElementById('itemName').value.trim();
+        const cost = parseFloat(document.getElementById('itemCost').value);
+        const payer = document.getElementById('payerSelect').value;
+
+        if (!item || isNaN(cost) || !payer) {
+            alert('請完整填寫項目、金額並選擇付款人');
+            return;
+        }
+
+        expenses.push({ item, cost, payer });
+        renderExpenses();
+        
+        // 清空輸入
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemCost').value = '';
+    }
+
+    // 渲染消費列表
+    function renderExpenses() {
+        const tbody = document.getElementById('expenseTableBody');
+        tbody.innerHTML = expenses.map((ex, index) => `
+            <tr>
+                <td>${ex.item}</td>
+                <td>${ex.payer}</td>
+                <td>${ex.cost}</td>
+                <td><button class="delete-btn" onclick="removeExpense(${index})">刪除</button></td>
+            </tr>
+        `).join('');
+    }
+
+    // 刪除消費
+    function removeExpense(index) {
+        expenses.splice(index, 1);
+        renderExpenses();
+    }
+
+    // --- 核心算法 ---
+    function calculate() {
+        if (people.length === 0) { alert("請先新增人員！"); return; }
+        if (expenses.length === 0) { alert("沒有消費紀錄可以計算！"); return; }
+
+        let total = 0;
+        let paidMap = {}; // 每個人實際付了多少
+        people.forEach(p => paidMap[p] = 0);
+
+        // 1. 統計總金額與每人已付金額
+        expenses.forEach(ex => {
+            total += ex.cost;
+            if (paidMap[ex.payer] !== undefined) {
+                paidMap[ex.payer] += ex.cost;
+            }
+        });
+
+        // 2. 計算平均
+        let average = total / people.length;
+        
+        // 3. 計算淨額 (Balance)
+        let balances = [];
+        people.forEach(p => {
+            let paid = paidMap[p];
+            let balance = paid - average; // 正數代表多付(應收錢)，負數代表少付(應給錢)
+            balances.push({ name: p, paid: paid, balance: balance });
+        });
+
+        // 顯示統計數據
+        document.getElementById('reportSection').style.display = 'block';
+        document.getElementById('totalDisplay').innerText = total;
+        document.getElementById('countDisplay').innerText = people.length;
+        document.getElementById('averageDisplay').innerText = average.toFixed(1); // 顯示小數點後一位
+
+        // 顯示個人詳情表
+        const balanceTbody = document.getElementById('balanceTableBody');
+        balanceTbody.innerHTML = balances.map(b => `
+            <tr>
+                <td>${b.name}</td>
+                <td>${b.paid}</td>
+                <td>${average.toFixed(1)}</td>
+                <td style="color:${b.balance >= 0 ? 'green' : 'red'}">
+                    ${b.balance >= 0 ? `+${b.balance.toFixed(1)} (應收)` : `${b.balance.toFixed(1)} (應付)`}
+                </td>
+            </tr>
+        `).join('');
+
+        // 4. 計算轉帳路徑 (Greedy Algorithm)
+        // 將人分為兩組：債務人 (Debtors, balance < 0) 和 債權人 (Creditors, balance > 0)
+        let debtors = balances.filter(b => b.balance < -0.01).sort((a, b) => a.balance - b.balance);
+        let creditors = balances.filter(b => b.balance > 0.01).sort((a, b) => b.balance - a.balance);
+        
+        let transactions = [];
+
+        let i = 0; // index for debtors
+        let j = 0; // index for creditors
+
+        while (i < debtors.length && j < creditors.length) {
+            let debtor = debtors[i];
+            let creditor = creditors[j];
+
+            // 取兩者絕對值的較小者作為交易金額
+            let amount = Math.min(Math.abs(debtor.balance), creditor.balance);
+            
+            // 記錄交易
+            transactions.push(`${debtor.name} 應該給 ${creditor.name}： ${amount.toFixed(0)} 元`);
+
+            // 更新餘額
+            debtor.balance += amount;
+            creditor.balance -= amount;
+
+            // 如果某一方結清了，移動指標
+            if (Math.abs(debtor.balance) < 0.01) i++;
+            if (creditor.balance < 0.01) j++;
+        }
+
+        // 顯示轉帳建議
+        const transferList = document.getElementById('transferList');
+        if (transactions.length > 0) {
+            transferList.innerHTML = transactions.map(t => `<li>${t}</li>`).join('');
+        } else {
+            transferList.innerHTML = `<li>🎉 帳目已經平衡，不需要轉帳！</li>`;
+        }
+    }
+
+    // 初始化範例數據 (依據使用者題目)
+    function initDemo() {
+        // 自動填入使用者的範例 A, B, C, D
+        ['A', 'B', 'C', 'D'].forEach(n => {
+            people.push(n);
+        });
+        updatePersonUI();
+        
+        // 模擬消費
+        expenses.push({ item: '範例消費1', cost: 600, payer: 'A' });
+        expenses.push({ item: '範例消費2', cost: 400, payer: 'B' });
+        renderExpenses();
+
+        // 預設執行一次計算
+        calculate();
+    }
+
+    // 解除註解下面這行可以自動載入範例數據
+    // window.onload = initDemo;
+
+</script>
+
+</body>
+</html>
