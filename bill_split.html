@@ -35,18 +35,61 @@
             position: relative;
         }
 
+        /* 手機版優化區塊 (RWD) */
+        @media (max-width: 480px) {
+            body { padding: 10px; } /* 減少手機版外部留白 */
+            .container { padding: 15px; border: none; box-shadow: none; } /* 增加內部空間 */
+            
+            h1 { font-size: 22px; }
+            
+            /* 輸入框改為垂直堆疊 */
+            .input-group { flex-direction: column; gap: 10px; }
+            .input-group input, .input-group select { width: 100%; box-sizing: border-box; }
+            
+            /* 匯率設定變直式 */
+            .rate-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .rate-row input { width: 100% !important; }
+
+            /* 表格變卡片式 (最重要的優化) */
+            thead { display: none; } /* 手機隱藏表頭 */
+            tr { 
+                display: flex; 
+                flex-direction: column;
+                background: #FFF9F0;
+                border: 1px solid #E0D5C1;
+                margin-bottom: 12px;
+                padding: 15px;
+                border-radius: 12px;
+                position: relative;
+            }
+            td { 
+                border: none !important; 
+                padding: 2px 0; 
+                display: block;
+                text-align: left;
+            }
+            /* 第一欄(項目)變大粗體 */
+            td:nth-child(1) { font-weight: bold; font-size: 1.1em; color: #5D5C61; margin-bottom: 5px; }
+            /* 刪除按鈕移到右上角 */
+            td:last-child { 
+                position: absolute; 
+                top: 10px; 
+                right: 10px; 
+            }
+        }
+
         /* 清除按鈕 (右上角) */
         .reset-btn-top {
             position: absolute; top: 20px; right: 20px;
             background: #FFE5E5; color: #C0392B;
             font-size: 12px; padding: 5px 10px; border-radius: 10px;
             cursor: pointer; border: 1px solid #FFCUCU;
+            z-index: 10;
         }
-        .reset-btn-top:hover { background: #FFD0D0; }
 
         h1 { 
             text-align: center; color: var(--primary-color); 
-            font-weight: 500; margin-bottom: 5px; font-size: 28px; margin-top: 10px;
+            font-weight: 500; margin-bottom: 5px; font-size: 28px; margin-top: 25px;
         }
         
         h2, h3 { color: #8D7B68; font-weight: 500; margin-top: 0;}
@@ -70,12 +113,11 @@
             padding: 4px 10px; border-radius: 8px; font-size: 12px;
             display: inline-block; transition: 0.3s;
         }
-        .bot-link:hover { background: #7a6652; }
 
         /* 輸入框與按鈕 */
         input, select { 
             padding: 12px; border: 1px solid #E0D5C1; 
-            border-radius: 10px; font-size: 15px; 
+            border-radius: 10px; font-size: 16px; /* 防止 iOS 自動縮放 */
             background: #FFF; color: var(--text-color);
             outline: none; transition: 0.3s;
         }
@@ -112,18 +154,18 @@
         }
         .checkbox-label {
             display: flex; align-items: center; cursor: pointer;
-            font-size: 14px; background: white; padding: 5px 10px;
-            border-radius: 15px; border: 1px solid #E0D5C1;
+            font-size: 14px; background: white; padding: 8px 12px; /* 手機版加大觸控區 */
+            border-radius: 15px; border: 1px solid #E0D5C1; margin-bottom: 5px;
         }
-        .checkbox-label input { margin-right: 5px; }
+        .checkbox-label input { margin-right: 5px; transform: scale(1.2); }
 
-        /* 表格 */
+        /* 表格 (桌面版樣式) */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th { text-align: left; color: #8D7B68; padding: 8px; border-bottom: 2px solid #FAEDCD; }
         td { padding: 8px; border-bottom: 1px solid #F0E6D2; color: #666; }
         
         .sub-text { font-size: 12px; color: #999; display: block; margin-top: 2px;}
-        .tag { display: inline-block; background: #FEFAE0; color: #8D7B68; padding: 4px 12px; border-radius: 20px; font-size: 13px; margin-right: 5px; margin-bottom: 5px;}
+        .tag { display: inline-block; background: #FEFAE0; color: #8D7B68; padding: 6px 12px; border-radius: 20px; font-size: 14px; margin-right: 5px; margin-bottom: 5px;}
 
         /* 結果區塊 */
         .result-box {
@@ -145,7 +187,7 @@
 <body>
 
 <div class="container">
-    <button class="reset-btn-top" onclick="clearAllData()">🗑️ 清除所有紀錄</button>
+    <button class="reset-btn-top" onclick="clearAllData()">🗑️ 重來</button>
 
     <h1>✈️ YONA的匯率結算機</h1>
     <p style="text-align: center; font-size: 14px; color: #999;">✨ 關掉視窗也能自動存檔 ✨</p>
@@ -160,7 +202,7 @@
             <input type="text" id="currencyName" value="JPY" placeholder="幣別" style="width: 60px; text-align:center;" oninput="saveData()">
             <span>匯率:</span>
             <input type="number" id="exchangeRate" value="0.22" step="0.0001" placeholder="匯率" style="width: 80px;" oninput="saveData()">
-            <span style="font-size:12px; color:#999;">(1元外幣 = 多少台幣)</span>
+            <span style="font-size:12px; color:#999; width:100%;">(例: 1元日幣 = 0.22 台幣)</span>
         </div>
     </div>
 
@@ -177,8 +219,7 @@
         <h3>2. 記下一筆消費</h3>
         <div class="input-group">
             <input type="text" id="itemName" placeholder="項目 (例: 居酒屋)">
-            <input type="number" id="itemCost" placeholder="金額">
-            <select id="payerSelect">
+            <input type="number" id="itemCost" placeholder="金額" inputmode="decimal"> <select id="payerSelect">
                 <option value="" disabled selected>誰先付?</option>
             </select>
         </div>
@@ -193,7 +234,7 @@
             <span style="color:#ccc; font-size:12px;">請先新增人員...</span>
         </div>
 
-        <button onclick="addExpense()" style="width: 100%; margin-top: 10px; background-color: #D4A373; color: white;">＋ 新增這筆消費</button>
+        <button onclick="addExpense()" style="width: 100%; margin-top: 15px; background-color: #D4A373; color: white; padding: 15px;">＋ 新增這筆消費</button>
 
         <table id="expenseTable">
             <thead>
@@ -357,16 +398,25 @@
         const tbody = document.getElementById('expenseTableBody');
         tbody.innerHTML = expenses.map((ex, index) => {
             let displayAmount = `$${ex.cost}`;
+            let foreignInfo = "";
             if (ex.isForeign) {
-                displayAmount = `<span style="font-weight:bold; color:#D4A373">$${ex.cost}</span>
-                                 <span class="sub-text">(${ex.currencyName} ${ex.inputCost})</span>`;
+                displayAmount = `<span style="font-weight:bold; color:#D4A373">$${ex.cost}</span>`;
+                foreignInfo = `<span class="sub-text">(${ex.currencyName} ${ex.inputCost})</span>`;
             }
 
             return `<tr>
                 <td>${ex.item}</td>
-                <td>${ex.payer}</td>
-                <td>${displayAmount}</td>
-                <td style="font-size:12px; color:#999;">${ex.involved.length === people.length ? '全員' : ex.involved.length + '人'}</td>
+                <td>
+                    <span style="font-size:12px; color:#999; display:none;" class="mobile-label">代墊:</span>
+                    ${ex.payer}
+                </td>
+                <td>
+                    ${displayAmount}
+                    ${foreignInfo}
+                </td>
+                <td style="font-size:12px; color:#999;">
+                   分攤: ${ex.involved.length === people.length ? '全員' : ex.involved.length + '人'}
+                </td>
                 <td><button class="delete-btn" onclick="removeExpense(${index})">✕</button></td>
             </tr>`;
         }).join('');
@@ -416,7 +466,6 @@
         // --- 顯示表格 (含外幣) ---
         const balanceTbody = document.getElementById('balanceTableBody');
         balanceTbody.innerHTML = balances.map(b => {
-            // 計算外幣估算值
             const balanceForeign = Math.round(b.balance / rate);
             const foreignText = `(約 ${currencyName} ${balanceForeign > 0 ? '+' : ''}${balanceForeign})`;
 
