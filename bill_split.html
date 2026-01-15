@@ -148,7 +148,7 @@
 </head>
 <body>
 
-<div class="container" id="captureArea">
+<div class="container">
     <h1>☁️ YONA的結算計算機</h1>
     <p style="text-align: center; font-size: 14px; color: #999;">✨ 輕鬆分帳，感情不散 ✨</p>
 
@@ -196,7 +196,7 @@
     <button class="action-btn" onclick="calculate()">🎀 產生結算報告</button>
 
     <div id="reportSection" style="display:none;">
-        <div class="result-box">
+        <div class="result-box" id="resultCaptureTarget">
             <h2 style="text-align: center;">📊 結算結果</h2>
             <div style="display: flex; justify-content: space-around; margin-bottom: 15px; font-weight: bold; color: #8D7B68;">
                 <span>總支出: $<span id="totalDisplay">0</span></span>
@@ -253,9 +253,7 @@
                            people.map(p => `<option value="${p}">${p}</option>`).join('');
         if (people.includes(currentVal)) select.value = currentVal;
 
-        // 3. 參與分攤 Checkbox (保留已勾選狀態邏輯較複雜，這裡簡化為重繪)
-        // 為了使用者體驗，如果是新增一個人，我們預設該人也會被勾選(若正在編輯中)，
-        // 但最簡單的是每次新增人員，重繪Checkbox並預設全選，讓使用者去取消。
+        // 3. 參與分攤 Checkbox
         renderCheckboxes();
     }
 
@@ -266,6 +264,7 @@
             return;
         }
         
+        // 簡單重繪，預設全選
         container.innerHTML = people.map(p => `
             <label class="checkbox-label">
                 <input type="checkbox" name="involved" value="${p}" checked> ${p}
@@ -415,28 +414,21 @@
         }
     }
 
-    // 下載圖片功能
+    // 下載圖片功能 (已修改為只截取結果區塊)
     function downloadImage() {
-        // 隱藏下載按鈕本身，避免截圖截進去
-        const btn = document.querySelector('.download-btn');
-        btn.style.display = 'none';
-
-        // 針對 captureArea 截圖
-        const element = document.getElementById("captureArea"); 
+        // 鎖定目標區塊
+        const element = document.getElementById("resultCaptureTarget"); 
         
         html2canvas(element, {
             scale: 2, // 提高解析度
-            backgroundColor: "#FDFBF7", // 確保背景色正確
+            backgroundColor: "#FFF9F0", // 確保背景色正確 (使用區塊的漸層色底)
             useCORS: true
         }).then(canvas => {
             // 創建下載連結
             let link = document.createElement('a');
-            link.download = 'YONA結算報告.png';
+            link.download = 'YONA結算結果.png';
             link.href = canvas.toDataURL("image/png");
             link.click();
-
-            // 恢復按鈕顯示
-            btn.style.display = 'block';
         });
     }
 </script>
