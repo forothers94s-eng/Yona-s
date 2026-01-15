@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Yona's Chat V4</title>
+<title>Yona's Chat V5</title>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
@@ -15,6 +15,7 @@
         --self-bubble: #D4A373;
         --other-bubble: #FFFFFF;
         --text-main: #5A544F;
+        --online-green: #4CD964;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -22,11 +23,8 @@
     body {
         font-family: 'Quicksand', 'Noto Sans TC', sans-serif;
         background-color: var(--chat-bg);
-        margin: 0;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
+        margin: 0; height: 100vh;
+        display: flex; flex-direction: column; overflow: hidden;
     }
 
     /* 登入畫面 */
@@ -50,18 +48,14 @@
     }
 
     /* 聊天室主體 */
-    #chat-container {
-        flex: 1; display: none; flex-direction: column; height: 100%;
-    }
+    #chat-container { flex: 1; display: none; flex-direction: column; height: 100%; }
 
     /* Header */
     .chat-header {
         background: rgba(253, 252, 248, 0.95);
-        padding: 10px 15px;
-        border-bottom: 1px solid #ddd;
-        display: flex; justify-content: space-between; align-items: center;
-        z-index: 10;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 10px 15px; border-bottom: 1px solid #ddd;
+        display: flex; justify-content: space-between; align-items: center; z-index: 10;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     .header-info { display: flex; align-items: center; gap: 8px; font-weight: bold; color: var(--primary); }
     .status-dot { width: 8px; height: 8px; background: #ccc; border-radius: 50%; transition: 0.3s; }
@@ -73,6 +67,21 @@
     }
     .btn-small.danger { border-color: #E08D8D; color: #E08D8D; }
 
+    /* 線上名單區 (新增) */
+    .online-users-bar {
+        background: #F9F9F9; padding: 8px 15px;
+        border-bottom: 1px solid #EEE;
+        display: flex; gap: 8px; align-items: center; overflow-x: auto;
+        font-size: 12px; color: #888; white-space: nowrap;
+    }
+    .user-tag {
+        background: white; border: 1px solid #ddd; border-radius: 15px;
+        padding: 2px 10px; display: flex; align-items: center; gap: 5px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .user-tag.me { border-color: var(--primary); color: var(--primary); font-weight: bold; }
+    .online-indicator { width: 6px; height: 6px; background: var(--online-green); border-radius: 50%; }
+
     /* 訊息區 */
     #messages-area {
         flex: 1; padding: 20px; overflow-y: auto;
@@ -83,23 +92,9 @@
     .msg-row.self { align-self: flex-end; align-items: flex-end; }
     .msg-row.other { align-self: flex-start; align-items: flex-start; }
     
-    /* --- 名字顯示設定 (這是這次修改的重點) --- */
-    .sender-name {
-        font-size: 12px;
-        color: #888;
-        margin-bottom: 4px;
-        font-weight: bold;
-    }
-    /* 自己的名字靠右 */
-    .msg-row.self .sender-name {
-        margin-right: 5px;
-        text-align: right;
-    }
-    /* 對方的名字靠左 */
-    .msg-row.other .sender-name {
-        margin-left: 5px;
-        text-align: left;
-    }
+    .sender-name { font-size: 12px; color: #888; margin-bottom: 4px; font-weight: bold; }
+    .msg-row.self .sender-name { margin-right: 5px; text-align: right; }
+    .msg-row.other .sender-name { margin-left: 5px; text-align: left; }
 
     .bubble {
         padding: 10px 15px; border-radius: 18px; font-size: 15px; line-height: 1.5;
@@ -110,16 +105,8 @@
     
     .time-tag { font-size: 9px; opacity: 0.6; margin-left: 6px; vertical-align: bottom; }
 
-    .system-msg {
-        align-self: center; background: rgba(0,0,0,0.05); color: #888;
-        font-size: 11px; padding: 4px 12px; border-radius: 10px; margin: 10px 0;
-    }
-    .history-divider {
-        display: flex; align-items: center; color: #aaa; font-size: 11px; margin: 15px 0;
-    }
-    .history-divider::before, .history-divider::after {
-        content: ""; flex: 1; height: 1px; background: #ddd; margin: 0 10px;
-    }
+    .history-divider { display: flex; align-items: center; color: #aaa; font-size: 11px; margin: 15px 0; }
+    .history-divider::before, .history-divider::after { content: ""; flex: 1; height: 1px; background: #ddd; margin: 0 10px; }
 
     /* 輸入區 */
     .input-area {
@@ -139,11 +126,11 @@
 <body>
 
     <div id="login-screen">
-        <h1>Yona's Chat V4</h1>
+        <h1>Yona's Chat V5</h1>
         <input type="text" id="username" placeholder="請輸入您的暱稱" maxlength="12">
         <button class="btn-join" onclick="joinChat()">進入聊天室</button>
         <p style="font-size:12px; color:#aaa; margin-top:20px;">
-            雙方紀錄將自動保存於各自裝置
+            ⚠️ 上線名單與歷史紀錄僅供即時參考
         </p>
     </div>
 
@@ -159,6 +146,10 @@
             </div>
         </div>
 
+        <div class="online-users-bar" id="onlineUsersBar">
+            <span>正在連線中...</span>
+        </div>
+
         <div id="messages-area"></div>
 
         <div class="input-area">
@@ -168,14 +159,20 @@
     </div>
 
 <script>
-    const CHAT_TOPIC = 'yona/secret/chat/v4'; 
-    const STORAGE_KEY = 'yona_chat_history_v4'; 
+    const CHAT_TOPIC = 'yona/secret/chat/v5'; 
+    const PRESENCE_TOPIC = 'yona/secret/presence/v5'; // 專門處理上線狀態的頻道
+    const STORAGE_KEY = 'yona_chat_history_v5'; 
     
     let client;
     let myName = '';
+    
+    // 用來記錄誰還活著: { "老公": 17145678900, "Cindy": 17145679900 }
+    let onlineUsers = {}; 
+
     const messagesArea = document.getElementById('messages-area');
     const msgInput = document.getElementById('msg-input');
     const statusDot = document.getElementById('status-dot');
+    const onlineUsersBar = document.getElementById('onlineUsersBar');
 
     msgInput.addEventListener('keypress', function (e) {
         if (e.key === 'Enter') sendMessage();
@@ -204,14 +201,28 @@
             console.log('Connected');
             statusDot.style.backgroundColor = '#4CD964';
             statusDot.style.boxShadow = '0 0 6px #4CD964';
-            client.subscribe(CHAT_TOPIC);
+            
+            // 訂閱兩個頻道：聊天 + 狀態
+            client.subscribe([CHAT_TOPIC, PRESENCE_TOPIC]);
+            
+            // 開始發送心跳 (每3秒喊一次)
+            startHeartbeat();
         });
 
         client.on('message', function (topic, message) {
             try {
                 const data = JSON.parse(message.toString());
-                displayMessage(data);
-                saveMessageToLocal(data);
+                
+                if (topic === CHAT_TOPIC) {
+                    // 處理聊天訊息
+                    displayMessage(data);
+                    saveMessageToLocal(data);
+                } 
+                else if (topic === PRESENCE_TOPIC) {
+                    // 處理心跳訊號 (更新上線時間)
+                    updatePresence(data.user);
+                }
+                
             } catch (e) { console.error(e); }
         });
         
@@ -220,6 +231,67 @@
             statusDot.style.boxShadow = 'none';
         });
     }
+
+    // --- 心跳與狀態機制 ---
+
+    function startHeartbeat() {
+        // 1. 立即喊一次
+        publishHeartbeat();
+        // 2. 每 3 秒喊一次
+        setInterval(publishHeartbeat, 3000);
+        // 3. 每 5 秒檢查一次名單，把太久沒喊的人踢掉
+        setInterval(checkOnlineUsers, 5000);
+    }
+
+    function publishHeartbeat() {
+        if (client && client.connected) {
+            const payload = { user: myName };
+            client.publish(PRESENCE_TOPIC, JSON.stringify(payload), { retain: false });
+        }
+    }
+
+    function updatePresence(user) {
+        // 記錄這個人最後出現的時間
+        onlineUsers[user] = Date.now();
+        renderOnlineBar();
+    }
+
+    function checkOnlineUsers() {
+        const now = Date.now();
+        // 超過 10 秒沒心跳，就視為離線
+        const timeout = 10000; 
+        
+        for (const user in onlineUsers) {
+            if (now - onlineUsers[user] > timeout) {
+                delete onlineUsers[user]; // 移除
+            }
+        }
+        renderOnlineBar();
+    }
+
+    function renderOnlineBar() {
+        let html = '<span style="font-weight:bold; color:#555; margin-right:5px;">線上:</span>';
+        
+        // 確保自己一定在名單上 (如果還沒收到自己的廣播)
+        if (!onlineUsers[myName]) onlineUsers[myName] = Date.now();
+
+        // 轉成陣列並排序
+        const users = Object.keys(onlineUsers).sort();
+        
+        users.forEach(u => {
+            const isMe = (u === myName) ? 'me' : '';
+            html += `
+                <div class="user-tag ${isMe}">
+                    <div class="online-indicator"></div>
+                    ${u}
+                </div>
+            `;
+        });
+        
+        onlineUsersBar.innerHTML = html;
+    }
+
+    // --- 聊天功能 ---
 
     function sendMessage() {
         const text = msgInput.value.trim();
@@ -283,7 +355,7 @@
     }
 
     function clearHistory() {
-        if(confirm('確定要清除所有紀錄嗎？(無法復原)')) {
+        if(confirm('確定要清除所有紀錄嗎？')) {
             localStorage.removeItem(STORAGE_KEY);
             location.reload();
         }
@@ -311,14 +383,8 @@
         });
     }
 
-    function scrollToBottom() {
-        messagesArea.scrollTop = messagesArea.scrollHeight;
-    }
-
-    function escapeHtml(text) {
-        if (!text) return text;
-        return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
+    function scrollToBottom() { messagesArea.scrollTop = messagesArea.scrollHeight; }
+    function escapeHtml(text) { return text ? text.replace(/</g, "&lt;").replace(/>/g, "&gt;") : text; }
 </script>
 
 </body>
