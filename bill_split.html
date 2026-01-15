@@ -12,10 +12,10 @@
             --bg-color: #FDFBF7;       /* 奶油白背景 */
             --card-bg: #FFF;           /* 純白卡片 */
             --primary-color: #D4A373;  /* 奶茶色 */
-            --accent-color: #CCD5AE;   /* 酪梨綠 (按鈕) */
-            --accent-hover: #E9EDC9;   /* 淺綠 (Hover) */
+            --accent-color: #CCD5AE;   /* 酪梨綠 */
+            --accent-hover: #E9EDC9;   
             --text-color: #5D5C61;     /* 暖灰文字 */
-            --border-radius: 16px;     /* 圓角 */
+            --border-radius: 16px;     
             --shadow: 0 4px 15px rgba(212, 163, 115, 0.15);
         }
 
@@ -23,48 +23,50 @@
             font-family: 'Kiwi Maru', 'Noto Sans TC', sans-serif; 
             background-color: var(--bg-color); 
             color: var(--text-color); 
-            padding: 20px; 
-            margin: 0;
+            padding: 20px; margin: 0;
         }
 
         .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-            background: var(--card-bg); 
-            padding: 30px; 
+            max-width: 600px; margin: 0 auto; 
+            background: var(--card-bg); padding: 30px; 
             border-radius: var(--border-radius); 
-            box-shadow: var(--shadow); 
-            border: 2px solid #FAEDCD;
+            box-shadow: var(--shadow); border: 2px solid #FAEDCD;
         }
 
         h1 { 
-            text-align: center; 
-            color: var(--primary-color); 
-            font-weight: 500; 
-            margin-bottom: 10px;
-            font-size: 28px;
+            text-align: center; color: var(--primary-color); 
+            font-weight: 500; margin-bottom: 10px; font-size: 28px;
         }
         
         h2, h3 { color: #8D7B68; font-weight: 500; margin-top: 0;}
 
         .section { 
-            background: #FFFEFA;
-            margin-bottom: 25px; 
-            padding: 20px; 
-            border: 1px dashed #E0D5C1; 
-            border-radius: var(--border-radius); 
+            background: #FFFEFA; margin-bottom: 25px; padding: 20px; 
+            border: 1px dashed #E0D5C1; border-radius: var(--border-radius); 
         }
 
-        /* 輸入框與按鈕樣式 */
+        /* 匯率設定區 */
+        .rate-settings {
+            background-color: #FAF6F0; padding: 15px;
+            border-radius: 12px; margin-bottom: 20px;
+            border: 1px solid #E0D5C1;
+        }
+        .rate-row {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px;
+        }
+        .bot-link {
+            text-decoration: none; background: #947e68; color: white;
+            padding: 4px 10px; border-radius: 8px; font-size: 12px;
+            display: inline-block; transition: 0.3s;
+        }
+        .bot-link:hover { background: #7a6652; }
+
+        /* 輸入框與按鈕 */
         input, select { 
-            padding: 12px; 
-            border: 1px solid #E0D5C1; 
-            border-radius: 10px; 
-            font-size: 15px; 
-            background: #FFF;
-            color: var(--text-color);
-            outline: none;
-            transition: 0.3s;
+            padding: 12px; border: 1px solid #E0D5C1; 
+            border-radius: 10px; font-size: 15px; 
+            background: #FFF; color: var(--text-color);
+            outline: none; transition: 0.3s;
         }
         input:focus, select:focus { border-color: var(--primary-color); }
 
@@ -73,16 +75,10 @@
         .input-group input[type="number"] { flex: 1; min-width: 80px;}
 
         button { 
-            cursor: pointer; 
-            background-color: var(--accent-color); 
-            color: #584B3D; 
-            border: none; 
-            border-radius: 20px;
-            padding: 10px 20px;
-            font-size: 15px; 
-            font-weight: bold;
-            transition: 0.3s;
-            font-family: 'Kiwi Maru', sans-serif;
+            cursor: pointer; background-color: var(--accent-color); 
+            color: #584B3D; border: none; border-radius: 20px;
+            padding: 10px 20px; font-size: 15px; font-weight: bold;
+            transition: 0.3s; font-family: 'Kiwi Maru', sans-serif;
         }
         button:hover { background-color: var(--accent-hover); transform: translateY(-2px); }
         
@@ -90,67 +86,72 @@
         button.download-btn { width: 100%; background-color: #A5A58D; color: white; margin-top: 10px; }
         button.delete-btn { background-color: #FFB7B2; color: white; padding: 5px 12px; font-size: 12px; border-radius: 10px;}
 
-        /* 參與者選單 Checkbox */
+        /* 外幣開關 */
+        .currency-toggle {
+            display: flex; align-items: center; margin-bottom: 10px;
+            font-size: 14px; color: #8D7B68; cursor: pointer;
+            background: #FFF9F0; padding: 8px; border-radius: 8px; width: fit-content;
+        }
+        .currency-toggle input { margin-right: 8px; transform: scale(1.2); }
+
+        /* 參與者 Checkbox */
         .participant-selector {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-            background: #FAF6F0;
-            padding: 10px;
-            border-radius: 10px;
+            display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;
+            background: #FAF6F0; padding: 10px; border-radius: 10px;
         }
         .checkbox-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-size: 14px;
-            background: white;
-            padding: 5px 10px;
-            border-radius: 15px;
-            border: 1px solid #E0D5C1;
+            display: flex; align-items: center; cursor: pointer;
+            font-size: 14px; background: white; padding: 5px 10px;
+            border-radius: 15px; border: 1px solid #E0D5C1;
         }
         .checkbox-label input { margin-right: 5px; }
 
-        /* 表格樣式 */
+        /* 表格 */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th { text-align: left; color: #8D7B68; padding: 8px; border-bottom: 2px solid #FAEDCD; }
         td { padding: 8px; border-bottom: 1px solid #F0E6D2; color: #666; }
         
-        /* 標籤樣式 */
+        .sub-text { font-size: 12px; color: #999; display: block; margin-top: 2px;}
+
+        /* 標籤 */
         .tag { display: inline-block; background: #FEFAE0; color: #8D7B68; padding: 4px 12px; border-radius: 20px; font-size: 13px; margin-right: 5px; margin-bottom: 5px;}
 
         /* 結果區塊 */
         .result-box {
             background-image: linear-gradient(to bottom right, #fff, #FFF9F0);
-            padding: 20px;
-            border-radius: var(--border-radius);
-            margin-top: 20px;
-            border: 2px solid #FAEDCD;
+            padding: 20px; border-radius: var(--border-radius);
+            margin-top: 20px; border: 2px solid #FAEDCD;
         }
         
         .transfer-item {
-            background: #FFF;
-            margin: 8px 0;
-            padding: 12px;
-            border-radius: 12px;
-            border-left: 6px solid var(--primary-color);
+            background: #FFF; margin: 8px 0; padding: 12px;
+            border-radius: 12px; border-left: 6px solid var(--primary-color);
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .amount-highlight { color: #D4A373; font-weight: bold; font-size: 1.1em; }
-
-        /* 浮水印 */
         .footer-note { text-align: center; font-size: 12px; color: #CCC; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>☁️ YONA的結算計算機</h1>
-    <p style="text-align: center; font-size: 14px; color: #999;">✨ 輕鬆分帳，感情不散 ✨</p>
+    <h1>✈️ YONA的匯率結算機</h1>
+    <p style="text-align: center; font-size: 14px; color: #999;">✨ 輕鬆分帳，出國旅遊必備 ✨</p>
+
+    <div class="rate-settings">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:bold; color:#8D7B68;">🌍 匯率設定</span>
+            <a href="https://rate.bot.com.tw/xrt?Lang=zh-TW" target="_blank" class="bot-link">🔍 查詢台銀匯率</a>
+        </div>
+        <div class="rate-row">
+            <span>幣別:</span>
+            <input type="text" id="currencyName" value="JPY" placeholder="幣別" style="width: 60px; text-align:center;">
+            <span>匯率:</span>
+            <input type="number" id="exchangeRate" value="0.22" step="0.0001" placeholder="0.22" style="width: 80px;">
+            <span style="font-size:12px; color:#999;">(1元外幣 = 多少台幣)</span>
+        </div>
+    </div>
 
     <div class="section">
         <h3>1. 誰一起出去玩？</h3>
@@ -158,21 +159,25 @@
             <input type="text" id="newPersonName" placeholder="輸入暱稱...">
             <button onclick="addPerson()">＋ 加入</button>
         </div>
-        <div id="personList">
-            </div>
+        <div id="personList"></div>
     </div>
 
     <div class="section">
         <h3>2. 記下一筆消費</h3>
         <div class="input-group">
-            <input type="text" id="itemName" placeholder="項目 (例: 晚餐)">
-            <input type="number" id="itemCost" placeholder="$ 金額">
+            <input type="text" id="itemName" placeholder="項目 (例: 居酒屋)">
+            <input type="number" id="itemCost" placeholder="金額">
             <select id="payerSelect">
                 <option value="" disabled selected>誰先付?</option>
             </select>
         </div>
         
-        <div style="font-size: 14px; color: #8D7B68; margin-bottom: 5px;">👇 誰有參與分攤？(預設全員)</div>
+        <label class="currency-toggle">
+            <input type="checkbox" id="isForeignCurrency"> 
+            是 <span id="labelCurrencyName" style="color:#D4A373; font-weight:bold; margin:0 3px;">JPY</span> (外幣) 嗎？
+        </label>
+
+        <div style="font-size: 14px; color: #8D7B68; margin-bottom: 5px; margin-top:15px;">👇 誰有參與分攤？(預設全員)</div>
         <div id="involvedCheckboxes" class="participant-selector">
             <span style="color:#ccc; font-size:12px;">請先新增人員...</span>
         </div>
@@ -182,11 +187,11 @@
         <table id="expenseTable">
             <thead>
                 <tr>
-                    <th width="30%">項目</th>
+                    <th width="35%">項目</th>
                     <th width="20%">代墊</th>
-                    <th width="20%">金額</th>
-                    <th width="15%">分攤人數</th>
-                    <th width="15%"></th>
+                    <th width="25%">金額(台幣)</th>
+                    <th width="10%">分攤</th>
+                    <th width="10%"></th>
                 </tr>
             </thead>
             <tbody id="expenseTableBody"></tbody>
@@ -197,12 +202,12 @@
 
     <div id="reportSection" style="display:none;">
         <div class="result-box" id="resultCaptureTarget">
-            <h2 style="text-align: center;">📊 結算結果</h2>
+            <h2 style="text-align: center;">📊 結算結果 (TWD)</h2>
             <div style="display: flex; justify-content: space-around; margin-bottom: 15px; font-weight: bold; color: #8D7B68;">
                 <span>總支出: $<span id="totalDisplay">0</span></span>
             </div>
 
-            <h3 style="font-size: 16px;">💸 轉帳建議</h3>
+            <h3 style="font-size: 16px;">💸 轉帳建議 (台幣)</h3>
             <div id="transferList"></div>
 
             <h3 style="font-size: 16px; margin-top: 20px;">📋 收支明細</h3>
@@ -220,7 +225,7 @@
             <div class="footer-note">Generated by YONA Calculator</div>
         </div>
         
-        <button class="download-btn" onclick="downloadImage()">📸 下載圖片 (分享到群組)</button>
+        <button class="download-btn" onclick="downloadImage()">📸 下載結果圖片</button>
     </div>
 </div>
 
@@ -228,7 +233,11 @@
     let people = []; 
     let expenses = []; 
 
-    // 新增人員
+    // 當外幣名稱改變時，更新 checkbox 文字
+    document.getElementById('currencyName').addEventListener('input', function(e) {
+        document.getElementById('labelCurrencyName').innerText = e.target.value || '外幣';
+    });
+
     function addPerson() {
         const nameInput = document.getElementById('newPersonName');
         const name = nameInput.value.trim();
@@ -241,19 +250,13 @@
         }
     }
 
-    // 更新介面 (標籤、下拉選單、核取方塊)
     function updatePersonUI() {
-        // 1. 列表
         document.getElementById('personList').innerHTML = people.map(p => `<span class="tag">${p}</span>`).join('');
-        
-        // 2. 付款人下拉
         const select = document.getElementById('payerSelect');
         const currentVal = select.value;
         select.innerHTML = `<option value="" disabled selected>誰先付?</option>` + 
                            people.map(p => `<option value="${p}">${p}</option>`).join('');
         if (people.includes(currentVal)) select.value = currentVal;
-
-        // 3. 參與分攤 Checkbox
         renderCheckboxes();
     }
 
@@ -263,8 +266,6 @@
             container.innerHTML = '<span style="color:#ccc; font-size:12px;">請先新增人員...</span>';
             return;
         }
-        
-        // 簡單重繪，預設全選
         container.innerHTML = people.map(p => `
             <label class="checkbox-label">
                 <input type="checkbox" name="involved" value="${p}" checked> ${p}
@@ -272,46 +273,51 @@
         `).join('');
     }
 
-    // 新增消費
     function addExpense() {
         const item = document.getElementById('itemName').value.trim();
-        const cost = parseFloat(document.getElementById('itemCost').value);
+        let inputCost = parseFloat(document.getElementById('itemCost').value);
         const payer = document.getElementById('payerSelect').value;
-        
-        // 獲取被勾選的參與人
+        const isForeign = document.getElementById('isForeignCurrency').checked;
+        const rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
+        const currencyName = document.getElementById('currencyName').value || '外幣';
+
         const checkboxes = document.querySelectorAll('input[name="involved"]:checked');
         const involved = Array.from(checkboxes).map(cb => cb.value);
 
-        if (!item || isNaN(cost) || !payer) {
-            alert('請填寫完整：項目、金額、付款人');
-            return;
-        }
-        if (involved.length === 0) {
-            alert('至少要有一個人分攤這筆費用喔！');
-            return;
-        }
+        if (!item || isNaN(inputCost) || !payer) { alert('請填寫完整：項目、金額、付款人'); return; }
+        if (involved.length === 0) { alert('至少要有一個人分攤這筆費用喔！'); return; }
 
-        expenses.push({ item, cost, payer, involved });
-        renderExpenses();
+        // 計算實際台幣金額 (四捨五入到整數)
+        let finalCostTWD = isForeign ? Math.round(inputCost * rate) : inputCost;
+
+        expenses.push({ 
+            item, inputCost, cost: finalCostTWD, payer, involved, isForeign, currencyName
+        });
         
-        // 清空輸入
+        renderExpenses();
         document.getElementById('itemName').value = '';
         document.getElementById('itemCost').value = '';
-        // 恢復全選
         document.querySelectorAll('input[name="involved"]').forEach(cb => cb.checked = true);
+        document.getElementById('isForeignCurrency').checked = false; // 重置外幣勾選
     }
 
     function renderExpenses() {
         const tbody = document.getElementById('expenseTableBody');
-        tbody.innerHTML = expenses.map((ex, index) => `
-            <tr>
+        tbody.innerHTML = expenses.map((ex, index) => {
+            let displayAmount = `$${ex.cost}`;
+            if (ex.isForeign) {
+                displayAmount = `<span style="font-weight:bold; color:#D4A373">$${ex.cost}</span>
+                                 <span class="sub-text">(${ex.currencyName} ${ex.inputCost})</span>`;
+            }
+
+            return `<tr>
                 <td>${ex.item}</td>
                 <td>${ex.payer}</td>
-                <td>${ex.cost}</td>
-                <td style="font-size:12px; color:#999;">${ex.involved.length === people.length ? '全員' : ex.involved.join(', ')}</td>
+                <td>${displayAmount}</td>
+                <td style="font-size:12px; color:#999;">${ex.involved.length === people.length ? '全員' : ex.involved.length + '人'}</td>
                 <td><button class="delete-btn" onclick="removeExpense(${index})">✕</button></td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
     }
 
     function removeExpense(index) {
@@ -319,86 +325,58 @@
         renderExpenses();
     }
 
-    // --- 計算邏輯 (支援排除人員) ---
     function calculate() {
         if (people.length === 0) { alert("還沒有人喔！"); return; }
         if (expenses.length === 0) { alert("還沒有消費紀錄！"); return; }
 
         let total = 0;
-        let paidMap = {};      // 實際付出的錢
-        let shouldPayMap = {}; // 應該付的錢 (消費額)
-        
-        people.forEach(p => {
-            paidMap[p] = 0;
-            shouldPayMap[p] = 0;
-        });
+        let paidMap = {}; let shouldPayMap = {}; 
+        people.forEach(p => { paidMap[p] = 0; shouldPayMap[p] = 0; });
 
-        // 遍歷每一筆消費
         expenses.forEach(ex => {
             total += ex.cost;
-            
-            // 記錄誰先付錢
-            if (paidMap[ex.payer] !== undefined) {
-                paidMap[ex.payer] += ex.cost;
-            }
-
-            // 計算分攤 (金額 / 參與人數)
+            if (paidMap[ex.payer] !== undefined) paidMap[ex.payer] += ex.cost;
             let splitAmount = ex.cost / ex.involved.length;
             ex.involved.forEach(person => {
-                if (shouldPayMap[person] !== undefined) {
-                    shouldPayMap[person] += splitAmount;
-                }
+                if (shouldPayMap[person] !== undefined) shouldPayMap[person] += splitAmount;
             });
         });
 
-        // 計算淨額 (已付 - 應付)
         let balances = [];
         people.forEach(p => {
             let balance = paidMap[p] - shouldPayMap[p];
             balances.push({ name: p, paid: paidMap[p], shouldPay: shouldPayMap[p], balance: balance });
         });
 
-        // 顯示介面
         document.getElementById('reportSection').style.display = 'block';
         document.getElementById('totalDisplay').innerText = total;
 
-        // 表格
         const balanceTbody = document.getElementById('balanceTableBody');
         balanceTbody.innerHTML = balances.map(b => `
             <tr>
                 <td>${b.name}</td>
-                <td>${b.paid}</td>
-                <td>${b.shouldPay.toFixed(1)}</td>
+                <td>${Math.round(b.paid)}</td>
+                <td>${Math.round(b.shouldPay)}</td>
                 <td style="color:${b.balance >= 0 ? '#6B8E23' : '#E74C3c'}; font-weight:bold;">
-                    ${b.balance >= 0 ? `+${b.balance.toFixed(0)}` : `${b.balance.toFixed(0)}`}
+                    ${b.balance >= 0 ? `+${Math.round(b.balance)}` : `${Math.round(b.balance)}`}
                 </td>
             </tr>
         `).join('');
 
-        // 轉帳算法
-        let debtors = balances.filter(b => b.balance < -0.01).sort((a, b) => a.balance - b.balance);
-        let creditors = balances.filter(b => b.balance > 0.01).sort((a, b) => b.balance - a.balance);
+        let debtors = balances.filter(b => b.balance < -0.5).sort((a, b) => a.balance - b.balance);
+        let creditors = balances.filter(b => b.balance > 0.5).sort((a, b) => b.balance - a.balance);
         let transactions = [];
-
-        let i = 0; 
-        let j = 0;
+        let i = 0; let j = 0;
 
         while (i < debtors.length && j < creditors.length) {
             let debtor = debtors[i];
             let creditor = creditors[j];
             let amount = Math.min(Math.abs(debtor.balance), creditor.balance);
             
-            transactions.push({
-                from: debtor.name,
-                to: creditor.name,
-                amount: amount
-            });
-
-            debtor.balance += amount;
-            creditor.balance -= amount;
-
-            if (Math.abs(debtor.balance) < 0.01) i++;
-            if (creditor.balance < 0.01) j++;
+            transactions.push({ from: debtor.name, to: creditor.name, amount: amount });
+            debtor.balance += amount; creditor.balance -= amount;
+            if (Math.abs(debtor.balance) < 0.5) i++;
+            if (creditor.balance < 0.5) j++;
         }
 
         const transferList = document.getElementById('transferList');
@@ -406,7 +384,7 @@
             transferList.innerHTML = transactions.map(t => `
                 <div class="transfer-item">
                     <span>${t.from} <span style="font-size:12px; color:#999;">給</span> ${t.to}</span>
-                    <span class="amount-highlight">$${t.amount.toFixed(0)}</span>
+                    <span class="amount-highlight">$${Math.round(t.amount)}</span>
                 </div>
             `).join('');
         } else {
@@ -414,17 +392,11 @@
         }
     }
 
-    // 下載圖片功能 (已修改為只截取結果區塊)
     function downloadImage() {
-        // 鎖定目標區塊
         const element = document.getElementById("resultCaptureTarget"); 
-        
         html2canvas(element, {
-            scale: 2, // 提高解析度
-            backgroundColor: "#FFF9F0", // 確保背景色正確 (使用區塊的漸層色底)
-            useCORS: true
+            scale: 2, backgroundColor: "#FFF9F0", useCORS: true
         }).then(canvas => {
-            // 創建下載連結
             let link = document.createElement('a');
             link.download = 'YONA結算結果.png';
             link.href = canvas.toDataURL("image/png");
@@ -432,6 +404,5 @@
         });
     }
 </script>
-
 </body>
 </html>
