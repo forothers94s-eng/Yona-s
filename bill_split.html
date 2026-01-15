@@ -14,6 +14,7 @@
             --primary-color: #D4A373;  /* 奶茶色 */
             --accent-color: #CCD5AE;   /* 酪梨綠 */
             --accent-hover: #E9EDC9;   
+            --danger-color: #E74C3C;   /* 警告紅 */
             --text-color: #5D5C61;     /* 暖灰文字 */
             --border-radius: 16px;     
             --shadow: 0 4px 15px rgba(212, 163, 115, 0.15);
@@ -31,11 +32,21 @@
             background: var(--card-bg); padding: 30px; 
             border-radius: var(--border-radius); 
             box-shadow: var(--shadow); border: 2px solid #FAEDCD;
+            position: relative;
         }
+
+        /* 清除按鈕 (右上角) */
+        .reset-btn-top {
+            position: absolute; top: 20px; right: 20px;
+            background: #FFE5E5; color: #C0392B;
+            font-size: 12px; padding: 5px 10px; border-radius: 10px;
+            cursor: pointer; border: 1px solid #FFCUCU;
+        }
+        .reset-btn-top:hover { background: #FFD0D0; }
 
         h1 { 
             text-align: center; color: var(--primary-color); 
-            font-weight: 500; margin-bottom: 10px; font-size: 28px;
+            font-weight: 500; margin-bottom: 5px; font-size: 28px; margin-top: 10px;
         }
         
         h2, h3 { color: #8D7B68; font-weight: 500; margin-top: 0;}
@@ -112,8 +123,6 @@
         td { padding: 8px; border-bottom: 1px solid #F0E6D2; color: #666; }
         
         .sub-text { font-size: 12px; color: #999; display: block; margin-top: 2px;}
-
-        /* 標籤 */
         .tag { display: inline-block; background: #FEFAE0; color: #8D7B68; padding: 4px 12px; border-radius: 20px; font-size: 13px; margin-right: 5px; margin-bottom: 5px;}
 
         /* 結果區塊 */
@@ -136,8 +145,10 @@
 <body>
 
 <div class="container">
+    <button class="reset-btn-top" onclick="clearAllData()">🗑️ 清除所有紀錄</button>
+
     <h1>✈️ YONA的匯率結算機</h1>
-    <p style="text-align: center; font-size: 14px; color: #999;">✨ 輕鬆分帳，出國旅遊必備 ✨</p>
+    <p style="text-align: center; font-size: 14px; color: #999;">✨ 關掉視窗也能自動存檔 ✨</p>
 
     <div class="rate-settings">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -146,9 +157,9 @@
         </div>
         <div class="rate-row">
             <span>幣別:</span>
-            <input type="text" id="currencyName" value="JPY" placeholder="幣別" style="width: 60px; text-align:center;">
+            <input type="text" id="currencyName" value="JPY" placeholder="幣別" style="width: 60px; text-align:center;" oninput="saveData()">
             <span>匯率:</span>
-            <input type="number" id="exchangeRate" value="0.22" step="0.0001" placeholder="0.22" style="width: 80px;">
+            <input type="number" id="exchangeRate" value="0.22" step="0.0001" placeholder="匯率" style="width: 80px;" oninput="saveData()">
             <span style="font-size:12px; color:#999;">(1元外幣 = 多少台幣)</span>
         </div>
     </div>
@@ -233,9 +244,63 @@
     let people = []; 
     let expenses = []; 
 
-    // 當外幣名稱改變時，更新 checkbox 文字
+    // --- 初始化：讀取舊資料 ---
+    window.onload = function() {
+        loadData();
+    };
+
+    // 儲存資料到 LocalStorage
+    function saveData() {
+        const currencyName = document.getElementById('currencyName').value;
+        const exchangeRate = document.getElementById('exchangeRate').value;
+        
+        localStorage.setItem('yona_people', JSON.stringify(people));
+        localStorage.setItem('yona_expenses', JSON.stringify(expenses));
+        localStorage.setItem('yona_currencyName', currencyName);
+        localStorage.setItem('yona_exchangeRate', exchangeRate);
+
+        // 更新外幣標籤顯示
+        document.getElementById('labelCurrencyName').innerText = currencyName || '外幣';
+    }
+
+    // 讀取資料
+    function loadData() {
+        const storedPeople = localStorage.getItem('yona_people');
+        const storedExpenses = localStorage.getItem('yona_expenses');
+        const storedCurrency = localStorage.getItem('yona_currencyName');
+        const storedRate = localStorage.getItem('yona_exchangeRate');
+
+        if (storedPeople) people = JSON.parse(storedPeople);
+        if (storedExpenses) expenses = JSON.parse(storedExpenses);
+        
+        if (storedCurrency) {
+            document.getElementById('currencyName').value = storedCurrency;
+            document.getElementById('labelCurrencyName').innerText = storedCurrency;
+        }
+        if (storedRate) document.getElementById('exchangeRate').value = storedRate;
+
+        // 恢復介面
+        updatePersonUI();
+        renderExpenses();
+    }
+
+    // 清除所有資料
+    function clearAllData() {
+        if (confirm('確定要清除所有紀錄嗎？(人員和帳務都會消失喔)')) {
+            localStorage.clear();
+            people = [];
+            expenses = [];
+            // 重整頁面最快
+            location.reload(); 
+        }
+    }
+
+    // --- 以下為原有功能 (已加入 saveData) ---
+
+    // 監聽匯率名稱變更
     document.getElementById('currencyName').addEventListener('input', function(e) {
         document.getElementById('labelCurrencyName').innerText = e.target.value || '外幣';
+        saveData(); // 儲存
     });
 
     function addPerson() {
@@ -245,6 +310,7 @@
             people.push(name);
             updatePersonUI();
             nameInput.value = '';
+            saveData(); // 儲存
         } else if (people.includes(name)) {
             alert('這個名字已經有囉！');
         }
@@ -257,7 +323,10 @@
         select.innerHTML = `<option value="" disabled selected>誰先付?</option>` + 
                            people.map(p => `<option value="${p}">${p}</option>`).join('');
         if (people.includes(currentVal)) select.value = currentVal;
-        renderCheckboxes();
+        
+        // 為了避免影響正在輸入的 checkbox，我們只在初始化或新增人員時重繪比較好
+        // 但為了簡單起見，這裡還是會重繪，使用者新增人員時要留意
+        renderCheckboxes(); 
     }
 
     function renderCheckboxes() {
@@ -266,6 +335,9 @@
             container.innerHTML = '<span style="color:#ccc; font-size:12px;">請先新增人員...</span>';
             return;
         }
+        // 讀取時，這裡預設 checked=true，可能導致操作中的狀態重置，
+        // 但因為是簡單應用，且通常是新增人員後才輸入消費，故影響不大。
+        // 若要保留勾選狀態需更複雜邏輯，此處保持 "新增人員後重置為全選"。
         container.innerHTML = people.map(p => `
             <label class="checkbox-label">
                 <input type="checkbox" name="involved" value="${p}" checked> ${p}
@@ -287,7 +359,6 @@
         if (!item || isNaN(inputCost) || !payer) { alert('請填寫完整：項目、金額、付款人'); return; }
         if (involved.length === 0) { alert('至少要有一個人分攤這筆費用喔！'); return; }
 
-        // 計算實際台幣金額 (四捨五入到整數)
         let finalCostTWD = isForeign ? Math.round(inputCost * rate) : inputCost;
 
         expenses.push({ 
@@ -295,10 +366,13 @@
         });
         
         renderExpenses();
+        saveData(); // 儲存
+
+        // 清空輸入
         document.getElementById('itemName').value = '';
         document.getElementById('itemCost').value = '';
         document.querySelectorAll('input[name="involved"]').forEach(cb => cb.checked = true);
-        document.getElementById('isForeignCurrency').checked = false; // 重置外幣勾選
+        document.getElementById('isForeignCurrency').checked = false;
     }
 
     function renderExpenses() {
@@ -323,6 +397,7 @@
     function removeExpense(index) {
         expenses.splice(index, 1);
         renderExpenses();
+        saveData(); // 儲存
     }
 
     function calculate() {
@@ -390,6 +465,8 @@
         } else {
             transferList.innerHTML = `<div style="text-align:center; padding:10px;">🎉 帳目已平，無需轉帳</div>`;
         }
+        
+        // 這裡不需要 saveData，因為計算結果是動態生成的，不是輸入資料
     }
 
     function downloadImage() {
