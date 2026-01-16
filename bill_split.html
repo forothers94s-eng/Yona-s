@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YONA的結算計算機 (無條件進位版)</title>
+    <title>YONA的結算計算機 (完整顯示版)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;500&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
     
@@ -37,20 +37,18 @@
 
         /* 手機版優化區塊 (RWD) */
         @media (max-width: 480px) {
-            body { padding: 10px; } /* 減少手機版外部留白 */
-            .container { padding: 15px; border: none; box-shadow: none; } /* 增加內部空間 */
+            body { padding: 10px; } 
+            .container { padding: 15px; border: none; box-shadow: none; }
             
             h1 { font-size: 22px; }
             
-            /* 輸入框改為垂直堆疊 */
             .input-group { flex-direction: column; gap: 10px; }
             .input-group input, .input-group select { width: 100%; box-sizing: border-box; }
             
-            /* 匯率設定變直式 */
             .rate-row { flex-direction: column; align-items: flex-start; gap: 10px; }
             .rate-row input { width: 100% !important; }
 
-            /* 表格變卡片式 (最重要的優化) */
+            /* 表格變卡片式 */
             thead { display: none; } /* 手機隱藏表頭 */
             tr { 
                 display: flex; 
@@ -64,19 +62,31 @@
             }
             td { 
                 border: none !important; 
-                padding: 2px 0; 
-                display: block;
-                text-align: left;
+                padding: 4px 0; 
+                display: flex; /* 改成 flex 讓標籤跟數值並排 */
+                align-items: center;
+                justify-content: space-between;
+                text-align: right;
             }
-            /* 第一欄(項目)變大粗體 */
-            td:nth-child(1) { font-weight: bold; font-size: 1.1em; color: #5D5C61; margin-bottom: 5px; }
+            
+            /* 第一欄(項目/姓名)變大粗體 */
+            td:nth-child(1) { 
+                font-weight: bold; font-size: 1.2em; color: #5D5C61; 
+                margin-bottom: 5px; border-bottom: 1px dashed #E0D5C1 !important;
+                justify-content: flex-start;
+            }
+            
             /* 刪除按鈕移到右上角 */
             td:last-child { 
-                position: absolute; 
-                top: 10px; 
-                right: 10px; 
+                justify-content: flex-end;
             }
+            
+            /* 讓手機版顯示標籤 */
+            .mobile-label { display: inline-block !important; font-weight: bold; color: #8D7B68; font-size: 14px; margin-right: 10px;}
         }
+
+        /* 桌面版隱藏手機標籤 */
+        .mobile-label { display: none; }
 
         /* 清除按鈕 (右上角) */
         .reset-btn-top {
@@ -114,10 +124,9 @@
             display: inline-block; transition: 0.3s;
         }
 
-        /* 輸入框與按鈕 */
         input, select { 
             padding: 12px; border: 1px solid #E0D5C1; 
-            border-radius: 10px; font-size: 16px; /* 防止 iOS 自動縮放 */
+            border-radius: 10px; font-size: 16px; 
             background: #FFF; color: var(--text-color);
             outline: none; transition: 0.3s;
         }
@@ -139,7 +148,6 @@
         button.download-btn { width: 100%; background-color: #A5A58D; color: white; margin-top: 10px; }
         button.delete-btn { background-color: #FFB7B2; color: white; padding: 5px 12px; font-size: 12px; border-radius: 10px;}
 
-        /* 外幣開關 */
         .currency-toggle {
             display: flex; align-items: center; margin-bottom: 10px;
             font-size: 14px; color: #8D7B68; cursor: pointer;
@@ -147,19 +155,17 @@
         }
         .currency-toggle input { margin-right: 8px; transform: scale(1.2); }
 
-        /* 參與者 Checkbox */
         .participant-selector {
             display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;
             background: #FAF6F0; padding: 10px; border-radius: 10px;
         }
         .checkbox-label {
             display: flex; align-items: center; cursor: pointer;
-            font-size: 14px; background: white; padding: 8px 12px; /* 手機版加大觸控區 */
+            font-size: 14px; background: white; padding: 8px 12px;
             border-radius: 15px; border: 1px solid #E0D5C1; margin-bottom: 5px;
         }
         .checkbox-label input { margin-right: 5px; transform: scale(1.2); }
 
-        /* 表格 (桌面版樣式) */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th { text-align: left; color: #8D7B68; padding: 8px; border-bottom: 2px solid #FAEDCD; }
         td { padding: 8px; border-bottom: 1px solid #F0E6D2; color: #666; }
@@ -167,7 +173,6 @@
         .sub-text { font-size: 12px; color: #999; display: block; margin-top: 2px;}
         .tag { display: inline-block; background: #FEFAE0; color: #8D7B68; padding: 6px 12px; border-radius: 20px; font-size: 14px; margin-right: 5px; margin-bottom: 5px;}
 
-        /* 結果區塊 */
         .result-box {
             background-image: linear-gradient(to bottom right, #fff, #FFF9F0);
             padding: 20px; border-radius: var(--border-radius);
@@ -190,7 +195,7 @@
     <button class="reset-btn-top" onclick="clearAllData()">🗑️ 重來</button>
 
     <h1>✈️ YONA的匯率結算機</h1>
-    <p style="text-align: center; font-size: 14px; color: #999;">✨ 關掉視窗也能自動存檔 (無條件進位版) ✨</p>
+    <p style="text-align: center; font-size: 14px; color: #999;">✨ 無條件進位 & 完整明細版 ✨</p>
 
     <div class="rate-settings">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -285,7 +290,6 @@
     let people = []; 
     let expenses = []; 
 
-    // --- 初始化 ---
     window.onload = function() { loadData(); };
 
     function saveData() {
@@ -379,7 +383,6 @@
         if (!item || isNaN(inputCost) || !payer) { alert('請填寫完整：項目、金額、付款人'); return; }
         if (involved.length === 0) { alert('至少要有一個人分攤這筆費用喔！'); return; }
 
-        // 修改點 1: 新增消費時，外幣換算直接使用 Math.ceil 無條件進位
         let finalCostTWD = isForeign ? Math.ceil(inputCost * rate) : inputCost;
 
         expenses.push({ 
@@ -407,16 +410,10 @@
 
             return `<tr>
                 <td>${ex.item}</td>
-                <td>
-                    <span style="font-size:12px; color:#999; display:none;" class="mobile-label">代墊:</span>
-                    ${ex.payer}
-                </td>
-                <td>
-                    ${displayAmount}
-                    ${foreignInfo}
-                </td>
+                <td><span class="mobile-label">代墊:</span>${ex.payer}</td>
+                <td><span class="mobile-label">金額:</span>${displayAmount}${foreignInfo}</td>
                 <td style="font-size:12px; color:#999;">
-                   分攤: ${ex.involved.length === people.length ? '全員' : ex.involved.length + '人'}
+                   <span class="mobile-label">分攤:</span>${ex.involved.length === people.length ? '全員' : ex.involved.length + '人'}
                 </td>
                 <td><button class="delete-btn" onclick="removeExpense(${index})">✕</button></td>
             </tr>`;
@@ -446,15 +443,11 @@
             });
         });
 
-        // 為了讓表格顯示一致，我們在計算結算表時，對「已付」和「應付」做進位處理
         let balances = [];
         people.forEach(p => {
             let displayPaid = Math.ceil(paidMap[p]);
             let displayShouldPay = Math.ceil(shouldPayMap[p]);
-            // 淨額 = 顯示的已付 - 顯示的應付 (這樣表格數字加減才對得起來)
             let balance = displayPaid - displayShouldPay;
-            
-            // 保留原始數值給轉帳邏輯用，但顯示時用上面的 balance
             let rawBalance = paidMap[p] - shouldPayMap[p]; 
             
             balances.push({ 
@@ -466,10 +459,8 @@
             });
         });
 
-        // 顯示介面
         document.getElementById('reportSection').style.display = 'block';
         
-        // --- 顯示總金額 (含外幣) (修改點 2: Math.ceil) ---
         const rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
         const currencyName = document.getElementById('currencyName').value || '外幣';
         const totalForeign = total / rate;
@@ -478,8 +469,9 @@
             ${Math.ceil(total)} <span style="font-size:14px; font-weight:normal; color:#999;">(約 ${currencyName} ${Math.ceil(totalForeign)})</span>
         `;
 
-        // --- 顯示表格 (含外幣) ---
         const balanceTbody = document.getElementById('balanceTableBody');
+        
+        // 修正重點：在這裡加入 <span class="mobile-label"> 讓手機版顯示標題
         balanceTbody.innerHTML = balances.map(b => {
             const balanceForeign = Math.round(b.rawBalance / rate);
             const foreignText = `(約 ${currencyName} ${balanceForeign > 0 ? '+' : ''}${balanceForeign})`;
@@ -487,18 +479,16 @@
             return `
             <tr>
                 <td>${b.name}</td>
-                <td>${b.paid}</td>
-                <td>${b.shouldPay}</td>
+                <td><span class="mobile-label">先付了:</span>${b.paid}</td>
+                <td><span class="mobile-label">應分攤:</span>${b.shouldPay}</td>
                 <td style="color:${b.balance >= 0 ? '#6B8E23' : '#E74C3c'}; font-weight:bold;">
-                    ${b.balance >= 0 ? `+${b.balance}` : `${b.balance}`}
+                    <span class="mobile-label">淨額:</span>${b.balance >= 0 ? `+${b.balance}` : `${b.balance}`}
                     <span class="sub-text" style="font-weight:normal;">${foreignText}</span>
                 </td>
             </tr>
             `;
         }).join('');
 
-        // --- 轉帳建議 (保持台幣) ---
-        // 為了公平，轉帳計算還是使用精確的小數點，但「顯示建議金額」時無條件進位
         let debtors = balances.filter(b => b.rawBalance < -0.5).sort((a, b) => a.rawBalance - b.rawBalance);
         let creditors = balances.filter(b => b.rawBalance > 0.5).sort((a, b) => b.rawBalance - a.rawBalance);
         let transactions = [];
@@ -507,16 +497,10 @@
         while (i < debtors.length && j < creditors.length) {
             let debtor = debtors[i];
             let creditor = creditors[j];
-            
-            // 使用原始 rawBalance 來計算誰欠誰，避免因進位造成的誤差導致無法歸零
             let amount = Math.min(Math.abs(debtor.rawBalance), creditor.rawBalance);
-            
-            // 修改點 3: 這裡在 push 進去時，amount 還是精確值，但在顯示時我們用 Math.ceil
             transactions.push({ from: debtor.name, to: creditor.name, amount: amount });
-            
             debtor.rawBalance += amount; 
             creditor.rawBalance -= amount;
-            
             if (Math.abs(debtor.rawBalance) < 0.5) i++;
             if (creditor.rawBalance < 0.5) j++;
         }
