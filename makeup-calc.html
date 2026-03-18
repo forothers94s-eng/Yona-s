@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Makeup Budget Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #d4a373; /* 溫柔的大地棕 */
+            --bg-color: #fdfbf7;      /* 奶油底色 */
+            --card-bg: #ffffff;
+            --text-main: #5a5a5a;
+            --accent-pink: #e9d5ca;   /* 韓系粉 */
+            --border-radius: 16px;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 20px 100px 20px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 500;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        /* 區塊樣式 */
+        .section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            shadow: var(--shadow);
+            border: 1px solid rgba(212, 163, 115, 0.1);
+        }
+
+        .section-title {
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--primary-color);
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        /* 輸入框通用樣式 */
+        input[type="number"], input[type="text"] {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 1rem;
+            color: var(--text-main);
+            width: 100%;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* 1. 基礎底妝 */
+        .grid-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* 3. 進階造型區 - 快選列 */
+        .quick-toolbar {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            scrollbar-width: none;
+        }
+
+        .quick-toolbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .capsule-btn {
+            background: var(--accent-pink);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-size: 0.9rem;
+            color: #7d6e66;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .capsule-btn:active {
+            opacity: 0.7;
+        }
+
+        /* 動態欄位 */
+        .dynamic-item {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 數量加減器 */
+        .stepper {
+            display: flex;
+            align-items: center;
+            background: #f8f8f8;
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .stepper button {
+            border: none;
+            background: none;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .stepper span {
+            width: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn {
+            color: #ffb5b5;
+            border: none;
+            background: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* 4. 髮型切換按鈕 */
+        .hair-toggle-group {
+            display: flex;
+            background: #f8f8f8;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 15px;
+        }
+
+        .hair-toggle-group label {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .hair-toggle-group input {
+            display: none;
+        }
+
+        .hair-toggle-group input:checked + span {
+            background: white;
+            color: var(--primary-color);
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            padding: 10px;
+        }
+        
+        /* 預設沒選中的文字墊片 */
+        .hair-toggle-group span {
+            display: block;
+            padding: 10px;
+        }
+
+        /* 6. 底部懸浮 */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 25px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .total-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-outline {
+            border: 1.5px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        /* Bottom Sheet */
+        .bottom-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 30px 20px 40px;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            z-index: 201;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .bottom-sheet.active {
+            bottom: 0;
+        }
+
+        .sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+
+        .bill-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 5px;
+        }
+
+        .copy-btn-large {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Mᴀᴋᴇᴜᴘ Cᴀʟᴄᴜʟᴀᴛᴏʀ</h1>
+
+    <div class="section">
+        <div class="section-title">基礎服務</div>
+        <div class="grid-row">
+            <div>
+                <label style="font-size: 0.8rem;">基礎底妝 ($)</label>
+                <input type="number" id="baseMakeupPrice" value="1200" onchange="calculateTotal()" onclick="autoSelect(this)">
+            </div>
+            <div>
+                <label style="font-size: 0.8rem;">妝前保養 ($)</label>
+                <input type="number" id="skinPrepPrice" value="300" onchange="calculateTotal()" onclick="autoSelect(this)">
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">進階造型項目</div>
+        
+        <div class="quick-toolbar">
+            <button class="capsule-btn" onclick="addStyling('複雜眼妝', 400)">👁️ 複雜眼妝</button>
+            <button class="capsule-btn" onclick="addStyling('精緻假睫毛', 250)">✨ 假睫毛</button>
+            <button class="capsule-btn" onclick="addStyling('雀斑妝/腮紅妝', 200)">🌸 氛圍感妝</button>
+            <button class="capsule-btn" onclick="addStyling('亮片/鑽飾', 150)">💎 亮片造型</button>
+            <button class="capsule-btn" onclick="addStyling('男仕修容', 500)">👦 男仕修容</button>
+        </div>
+
+        <div id="dynamic-list">
+            </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">髮型服務</div>
+        <div class="hair-toggle-group">
+            <label>
+                <input type="radio" name="hairType" value="0" checked onchange="calculateTotal()">
+                <span>無</span>
+            </label>
+            <label>
+                <input type="radio" name="hairType" value="200" onchange="calculateTotal()">
+                <span>簡易 ($200)</span>
+            </label>
+            <label>
+                <input type="radio" name="hairType" value="450" onchange="calculateTotal()">
+                <span>複雜 ($450)</span>
+            </label>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.9rem;">髮飾加購 ($50/個)</span>
+            <div class="stepper">
+                <button onclick="updateAccessory(-1)">−</button>
+                <span id="accessoryCount">0</span>
+                <button onclick="updateAccessory(1)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">其他項目 (折扣/加價)</div>
+        <input type="number" id="adjustment" placeholder="例如: -200 或 500" onchange="calculateTotal()" onclick="autoSelect(this)">
+    </div>
+
+    <div class="footer">
+        <div class="total-price">$ <span id="displayTotal">0</span></div>
+        <div class="action-btns">
+            <button class="btn-outline" onclick="toggleSheet(true)">👁️ 明細</button>
+        </div>
+    </div>
+
+    <div class="bottom-sheet-overlay" id="overlay" onclick="toggleSheet(false)"></div>
+    <div class="bottom-sheet" id="bottomSheet">
+        <div class="sheet-handle"></div>
+        <div id="bill-content">
+            </div>
+        <button class="copy-btn-large" onclick="copyBill()">📋 複製帳單明細</button>
+    </div>
+
+    <script>
+        let stylingItems = [];
+        let accessoryCount = 0;
+
+        // 初始化
+        function init() {
+            calculateTotal();
+        }
+
+        // 自動全選並捲動至中心
+        function autoSelect(input) {
+            input.select();
+            setTimeout(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+
+        // 新增進階造型
+        function addStyling(name, price) {
+            const id = Date.now();
+            stylingItems.push({ id, name, price, qty: 1 });
+            renderStylingItems();
+            calculateTotal();
+        }
+
+        // 渲染動態列表
+        function renderStylingItems() {
+            const container = document.getElementById('dynamic-list');
+            container.innerHTML = stylingItems.map(item => `
+                <div class="dynamic-item">
+                    <input type="text" value="${item.name}" onchange="updateItem(${item.id}, 'name', this.value)">
+                    <input type="number" value="${item.price}" onchange="updateItem(${item.id}, 'price', this.value)" onclick="autoSelect(this)">
+                    <div class="stepper">
+                        <button onclick="updateItemQty(${item.id}, -1)">−</button>
+                        <span>${item.qty}</span>
+                        <button onclick="updateItemQty(${item.id}, 1)">+</button>
+                    </div>
+                    <button class="delete-btn" onclick="removeItem(${item.id})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function updateItem(id, key, value) {
+            const item = stylingItems.find(i => i.id === id);
+            if (item) {
+                item[key] = key === 'price' ? Number(value) : value;
+                calculateTotal();
+            }
+        }
+
+        function updateItemQty(id, delta) {
+            const item = stylingItems.find(i => i.id === id);
+            if (item) {
+                item.qty = Math.max(1, item.qty + delta);
+                renderStylingItems();
+                calculateTotal();
+            }
+        }
+
+        function removeItem(id) {
+            stylingItems = stylingItems.filter(i => i.id !== id);
+            renderStylingItems();
+            calculateTotal();
+        }
+
+        function updateAccessory(delta) {
+            accessoryCount = Math.max(0, accessoryCount + delta);
+            document.getElementById('accessoryCount').innerText = accessoryCount;
+            calculateTotal();
+        }
+
+        // 計算總分
+        function calculateTotal() {
+            let total = 0;
+            
+            // 基礎
+            total += Number(document.getElementById('baseMakeupPrice').value) || 0;
+            total += Number(document.getElementById('skinPrepPrice').value) || 0;
+
+            // 進階
+            stylingItems.forEach(item => {
+                total += (item.price * item.qty);
+            });
+
+            // 髮型
+            const hairPrice = Number(document.querySelector('input[name="hairType"]:checked').value);
+            total += hairPrice;
+            total += (accessoryCount * 50);
+
+            // 調整
+            total += Number(document.getElementById('adjustment').value) || 0;
+
+            document.getElementById('displayTotal').innerText = total.toLocaleString();
+            return total;
+        }
+
+        // Bottom Sheet 控制
+        function toggleSheet(show) {
+            const sheet = document.getElementById('bottomSheet');
+            const overlay = document.getElementById('overlay');
+            if (show) {
+                generateBill();
+                overlay.style.display = 'block';
+                setTimeout(() => {
+                    overlay.style.opacity = '1';
+                    sheet.classList.add('active');
+                }, 10);
+            } else {
+                sheet.classList.remove('active');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 400);
+            }
+        }
+
+        // 生成明細內容
+        function generateBill() {
+            const content = document.getElementById('bill-content');
+            let html = `<h3 style="text-align:center; margin-top:0;">造型服務清單</h3>`;
+            
+            const base = Number(document.getElementById('baseMakeupPrice').value);
+            if(base) html += `<div class="bill-item"><span>基礎底妝</span><span>$${base}</span></div>`;
+            
+            const prep = Number(document.getElementById('skinPrepPrice').value);
+            if(prep) html += `<div class="bill-item"><span>妝前保養</span><span>$${prep}</span></div>`;
+
+            stylingItems.forEach(item => {
+                html += `<div class="bill-item"><span>${item.name} x${item.qty}</span><span>$${item.price * item.qty}</span></div>`;
+            });
+
+            const hairPrice = Number(document.querySelector('input[name="hairType"]:checked').value);
+            if(hairPrice > 0) html += `<div class="bill-item"><span>髮型服務</span><span>$${hairPrice}</span></div>`;
+            
+            if(accessoryCount > 0) html += `<div class="bill-item"><span>髮飾加購 x${accessoryCount}</span><span>$${accessoryCount * 50}</span></div>`;
+
+            const adj = Number(document.getElementById('adjustment').value);
+            if(adj !== 0) html += `<div class="bill-item"><span>額外調整</span><span>${adj > 0 ? '+' : ''}${adj}</span></div>`;
+
+            html += `<div style="text-align:right; font-size:1.2rem; font-weight:700; margin-top:15px; color:var(--primary-color);">總計: $${calculateTotal()}</div>`;
+            
+            content.innerHTML = html;
+        }
+
+        // 複製到剪貼簿
+        function copyBill() {
+            let text = "✨ 您的造型預算明細 ✨\n------------------\n";
+            
+            const base = document.getElementById('baseMakeupPrice').value;
+            if(base) text += `• 基礎底妝: $${base}\n`;
+            
+            stylingItems.forEach(item => {
+                text += `• ${item.name} (x${item.qty}): $${item.price * item.qty}\n`;
+            });
+
+            const hairPrice = document.querySelector('input[name="hairType"]:checked').value;
+            if(hairPrice > 0) text += `• 髮型服務: $${hairPrice}\n`;
+            if(accessoryCount > 0) text += `• 髮飾加購: $${accessoryCount * 50}\n`;
+
+            const adj = document.getElementById('adjustment').value;
+            if(adj) text += `• 其他調整: ${adj}\n`;
+
+            text += `------------------\n總金額：$${calculateTotal()}`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('明細已複製到剪貼簿囉！');
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
